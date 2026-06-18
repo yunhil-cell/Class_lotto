@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>상호작용형 학생 추첨 시스템</title>
-    <!-- Tailwind CSS 지원 및 아이콘 라이브러리 연동 -->
+    <title>학생 추첨 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -42,93 +41,68 @@
         <div class="absolute -bottom-28 left-1/3 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
     </div>
 
-    <!-- 메인 컨테이너 -->
-    <div class="w-full max-w-4xl glass-panel rounded-[2rem] shadow-2xl p-6 md:p-8 relative z-10">
+    <div class="w-full max-w-6xl glass-panel rounded-[2rem] shadow-2xl p-6 md:p-8 relative z-10">
 
-        <!-- 커스텀 알림 모달 -->
         <div id="custom-alert" class="hidden fixed inset-0 flex items-center justify-center z-50 px-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-            <div
-                class="bg-slate-800 border border-red-500/30 rounded-2xl p-6 max-w-sm w-full relative z-10 text-center shadow-2xl transform scale-95 transition-transform duration-200">
-                <div
-                    class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <div class="bg-slate-800 border border-red-500/30 rounded-2xl p-6 max-w-sm w-full relative z-10 text-center shadow-2xl transform scale-95 transition-transform duration-200">
+                <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <h3 class="text-lg font-bold mb-2">오류가 발생했습니다</h3>
                 <p id="alert-message" class="text-slate-300 text-sm mb-6"></p>
-                <button onclick="closeAlert()"
-                    class="w-full py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 transition text-white font-semibold rounded-xl">확인</button>
+                <button onclick="closeAlert()" class="w-full py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 transition text-white font-semibold rounded-xl">확인</button>
             </div>
         </div>
 
-        <!-- 1. 설정 및 입력 화면 -->
         <div id="setup-screen" class="space-y-6">
             <div class="text-center">
-                <span
-                    class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-500/10 border border-indigo-400/20 text-indigo-200 rounded-full text-xs font-bold tracking-wider uppercase shadow-lg shadow-indigo-500/10">
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-500/10 border border-indigo-400/20 text-indigo-200 rounded-full text-xs font-bold tracking-wider uppercase shadow-lg shadow-indigo-500/10">
                     <i class="fa-solid fa-clover text-emerald-300"></i>
                     LUCKY DRAW
                 </span>
-                <h1
-                    class="text-4xl md:text-5xl font-black mt-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-indigo-300 to-fuchsia-300 drop-shadow">
+                <h1 class="text-4xl md:text-5xl font-black mt-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-indigo-300 to-fuchsia-300 drop-shadow">
                     학생 추첨 시뮬레이터
                 </h1>
                 <p class="text-slate-400 text-sm mt-1">확률과 횟수를 지정하여 공정한 추첨을 시작하세요.</p>
             </div>
 
-            <!-- 설정 카드 레이아웃 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-
-                <!-- 확률 입력 카드 -->
-                <div
-                    class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
+                <div class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-indigo-300">
                         <i class="fa-solid fa-percentage"></i> 확률 방식 선택
                     </h2>
 
-                    <!-- 토글 탭 -->
                     <div class="flex bg-black/30 p-1.5 rounded-2xl border border-white/5">
-                        <button onclick="setProbType('fraction')" id="btn-fraction"
-                            class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20">
+                        <button onclick="setProbType('fraction')" id="btn-fraction" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20">
                             분수 입력
                         </button>
-                        <button onclick="setProbType('percent')" id="btn-percent"
-                            class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 text-slate-400 hover:text-white hover:bg-white/5">
+                        <button onclick="setProbType('percent')" id="btn-percent" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 text-slate-400 hover:text-white hover:bg-white/5">
                             퍼센트(%) 입력
                         </button>
                     </div>
 
-                    <!-- 분수 입력 영역 -->
                     <div id="fraction-area" class="space-y-2">
                         <label class="block text-xs text-slate-400">당첨 확률 (분수 형태)</label>
-                        <div
-                            class="flex items-center justify-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
-                            <input type="number" id="prob-num" value="1" min="1"
-                                class="w-20 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
+                        <div class="flex items-center justify-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
+                            <input type="number" id="prob-num" value="1" min="1" class="w-20 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
                             <span class="text-xl font-bold text-slate-500">/</span>
-                            <input type="number" id="prob-den" value="5" min="1"
-                                class="w-20 bg-slate-800 text-center py-2 text-lg font-bold rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 transition text-indigo-400">
+                            <input type="number" id="prob-den" value="5" min="1" class="w-20 bg-slate-800 text-center py-2 text-lg font-bold rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 transition text-indigo-400">
                         </div>
-                        <p class="text-[11px] text-slate-400 text-center" id="fraction-preview">현재 확률: 20% (5번 중 1번 당첨)
-                        </p>
+                        <p class="text-[11px] text-slate-400 text-center" id="fraction-preview">현재 확률: 20% (5번 중 1번 당첨)</p>
                     </div>
 
-                    <!-- 퍼센트 입력 영역 -->
                     <div id="percent-area" class="space-y-2 hidden">
                         <label class="block text-xs text-slate-400">당첨 확률 (퍼센트 수치)</label>
-                        <div
-                            class="flex items-center justify-center gap-2 bg-black/20 p-3 rounded-xl border border-white/5">
-                            <input type="number" id="prob-percent" value="20" min="0" max="100" step="any"
-                                class="w-28 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
+                        <div class="flex items-center justify-center gap-2 bg-black/20 p-3 rounded-xl border border-white/5">
+                            <input type="number" id="prob-percent" value="20" min="0" max="100" step="any" class="w-28 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
                             <span class="text-xl font-bold text-slate-400">%</span>
                         </div>
                         <p class="text-[11px] text-slate-400 text-center">0%에서 100% 사이로 자유롭게 설정 가능합니다.</p>
                     </div>
                 </div>
 
-                <!-- 추첨 횟수 입력 카드 -->
-                <div
-                    class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 flex flex-col justify-between shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
+                <div class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 flex flex-col justify-between shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
                     <div class="space-y-4">
                         <h2 class="text-lg font-bold flex items-center gap-2 text-indigo-300">
                             <i class="fa-solid fa-ticket"></i> 추첨 횟수 설정
@@ -136,24 +110,19 @@
 
                         <div class="space-y-2">
                             <label class="block text-xs text-slate-400">총 뽑아낼 카드 갯수 (최대 40회)</label>
-                            <div
-                                class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
-                                <button onclick="adjustDrawCount(-1)"
-                                    class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
+                            <div class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
+                                <button onclick="adjustDrawCount(-1)" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <input type="number" id="draw-count" value="5" min="1" max="40"
-                                    class="w-20 bg-transparent text-center text-2xl font-black focus:outline-none text-white">
-                                <button onclick="adjustDrawCount(1)"
-                                    class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
+                                <input type="number" id="draw-count" value="5" min="1" max="40" class="w-20 bg-transparent text-center text-2xl font-black focus:outline-none text-white">
+                                <button onclick="adjustDrawCount(1)" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <button onclick="startDraw()"
-                        class="group w-full mt-6 py-4 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 hover:brightness-110 active:scale-[0.98] transition-all duration-200 rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2">
+                    <button onclick="startDraw()" class="group w-full mt-6 py-4 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 hover:brightness-110 active:scale-[0.98] transition-all duration-200 rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-play group-hover:scale-110 transition-transform"></i>
                         추첨 시작하기
                     </button>
@@ -161,69 +130,53 @@
             </div>
         </div>
 
-        <!-- 2. 추첨 결과 & 애니메이션 Canvas 화면 -->
         <div id="draw-screen" class="hidden space-y-6">
-            <div
-                class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-2.5">
                         <h2 class="text-xl md:text-2xl font-extrabold text-indigo-300 flex items-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> 실시간 추첨 현황
                         </h2>
-                        <!-- 설정된 확률 표시 배지 -->
-                        <span id="current-probability-badge"
-                            class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold tracking-wide">
+                        <span id="current-probability-badge" class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold tracking-wide">
                             설정 확률: -
                         </span>
                     </div>
                     <p class="text-xs text-slate-400" id="draw-status-text">추첨 준비 중...</p>
                 </div>
-                <!-- 돌아가기 버튼 -->
-                <button id="btn-back" onclick="goBack()"
-                    class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed"
-                    disabled>
+                <button id="btn-back" onclick="goBack()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <i class="fa-solid fa-rotate-left"></i> 다시 설정하기 (설정 유지)
                 </button>
             </div>
 
-            <!-- Canvas 컨테이너 -->
-            <div
-                class="relative w-full aspect-[4/3] max-h-[500px] bg-slate-950/90 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/5">
+            <div class="relative w-full h-[65vh] bg-slate-950/90 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/5">
                 <canvas id="canvas" class="w-full h-full block"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- 스크립트 파트 -->
     <script>
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // 상태 변수들
-        let probType = 'fraction'; // 'fraction' | 'percent'
-        let probability = 0.2; // 계산된 확률 (0 ~ 1)
+        let probType = 'fraction';
+        let probability = 0.2;
         let totalDraws = 5;
-        let results = []; // 각 회차의 결과 ('WIN' | 'LOSE')
+        let results = [];
 
-        // Canvas 관련
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let animationId;
 
-        // 애니메이션 그래픽 데이터 구조
         let particles = [];
         let cards = [];
 
-        // 단계 정의
-        // 'COUNTDOWN': 3초 카운트다운 및 카드 고속 셔플링 -> 'REVEALING': 0.3초당 카드 한 장씩 공개 -> 'FINISHED': 완료
         let animState = 'COUNTDOWN';
-        let countdownTimer = 0; // 프레임 단위 누적 (60fps 기준)
-        const countdownDuration = 180; // 3초 (60fps = 180프레임)
+        let countdownTimer = 0;
+        const countdownDuration = 180;
 
         let revealTimer = 0;
-        const revealInterval = 18; // 0.3초 (60fps = 18프레임)
-        let currentRevealIndex = -1; // 현재 오픈 중인 카드 인덱스
+        const revealInterval = 18;
+        let currentRevealIndex = -1;
 
-        // 커스텀 알림창 핸들러
         function showAlert(msg) {
             document.getElementById('alert-message').innerText = msg;
             const modal = document.getElementById('custom-alert');
@@ -233,7 +186,6 @@
             document.getElementById('custom-alert').classList.add('hidden');
         }
 
-        // 확률 모드 변경
         function setProbType(type) {
             probType = type;
             const btnFraction = document.getElementById('btn-fraction');
@@ -254,7 +206,6 @@
             }
         }
 
-        // 실시간 분수 미리보기
         document.getElementById('prob-num').addEventListener('input', updateFractionPreview);
         document.getElementById('prob-den').addEventListener('input', updateFractionPreview);
 
@@ -270,7 +221,6 @@
             preview.innerText = `현재 확률: ${pct}% (${den}번 중 ${num}번 당첨)`;
         }
 
-        // 횟수 조절기
         function adjustDrawCount(val) {
             const input = document.getElementById('draw-count');
             let current = parseInt(input.value) || 1;
@@ -280,9 +230,7 @@
             input.value = current;
         }
 
-        // --- 추첨 시작 ---
         function startDraw() {
-            // 1. 데이터 검증 및 분석
             totalDraws = parseInt(document.getElementById('draw-count').value);
             if (isNaN(totalDraws) || totalDraws < 1 || totalDraws > 40) {
                 showAlert('추첨 횟수는 1회부터 40회까지만 입력 가능합니다.');
@@ -314,39 +262,37 @@
                 displayProbText = `설정 확률: ${percent}%`;
             }
 
-            // 실시간 상단 배지에 설정 확률 반영
             document.getElementById('current-probability-badge').innerText = displayProbText;
 
-            // 2. 난수 독립 시행으로 미리 결과 연산
             results = [];
             for (let i = 0; i < totalDraws; i++) {
                 results.push(Math.random() < probability ? 'WIN' : 'LOSE');
             }
 
-            // 3. UI 화면 전환
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('draw-screen').classList.remove('hidden');
 
-            // 돌아가기 버튼 초기화 비활성화
             const btnBack = document.getElementById('btn-back');
             btnBack.disabled = true;
             btnBack.className = "px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed";
 
-            // 4. 시뮬레이터 시스템 초기화
             initSimulator();
         }
 
-        // 돌아가기 기능 (세팅 유지)
         function goBack() {
             cancelAnimationFrame(animationId);
             document.getElementById('draw-screen').classList.add('hidden');
             document.getElementById('setup-screen').classList.remove('hidden');
         }
 
-        // 고해상도 해상도 설정 헬퍼
         function resizeCanvas() {
-            canvas.width = 800;
-            canvas.height = 600;
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
         }
 
         class Card {
@@ -356,36 +302,31 @@
                 this.targetX = x;
                 this.targetY = y;
                 this.x = x;
-                this.y = y + 100; // 아래에서 부드럽게 나타나는 오프셋
+                this.y = y + 100;
                 this.w = w;
                 this.h = h;
 
-                this.flipProgress = 0; // 0: 뒷면, 1: 앞면
+                this.flipProgress = 0;
                 this.isFlipped = false;
                 this.opacity = 0;
 
-                // 카운트다운 기간 동안 가짜로 깜빡일 상태 ('WIN' 또는 'LOSE')
                 this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
             }
 
             update() {
-                // 부드러운 목적지 보간 (Ease-out)
                 this.y += (this.targetY - this.y) * 0.12;
                 if (this.opacity < 1) this.opacity += 0.08;
 
-                // 카운트다운 기간 동안 무작위로 상태 고속 셔플
                 if (animState === 'COUNTDOWN') {
-                    if (Math.random() < 0.15) { // 약 15% 확률로 매 프레임마다 결과 반전
+                    if (Math.random() < 0.15) {
                         this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
                     }
                 }
 
-                // 플립 회전 진척도 업데이트
                 if (this.isFlipped && this.flipProgress < 1) {
                     this.flipProgress += 0.08;
                     if (this.flipProgress > 1) {
                         this.flipProgress = 1;
-                        // 당첨 카드가 개봉되는 순간 금빛 폭죽 방출
                         if (this.result === 'WIN') {
                             spawnParticles(this.x + this.w / 2, this.y + this.h / 2);
                         }
@@ -400,18 +341,17 @@
                 const midX = this.x + this.w / 2;
 
                 if (animState === 'COUNTDOWN') {
-                    // --- 1. 카운트다운 고속 셔플링 연출 ---
                     const isWin = this.shuffleState === 'WIN';
                     const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
 
                     if (isWin) {
                         grad.addColorStop(0, '#1e1b4b');
                         grad.addColorStop(1, '#311042');
-                        ctx.strokeStyle = 'rgba(234, 179, 8, 0.7)'; // 당첨 가능성 옐로우 광원
+                        ctx.strokeStyle = 'rgba(234, 179, 8, 0.7)';
                     } else {
                         grad.addColorStop(0, '#0f172a');
                         grad.addColorStop(1, '#1e293b');
-                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)'; // 일반 블루 네온 광원
+                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
                     }
 
                     ctx.fillStyle = grad;
@@ -428,13 +368,11 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText(isWin ? '당첨' : '꽝', midX, this.y + this.h / 2);
 
-                    // 디지털 스캔라인 빔 효과 연출
                     ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
                     const scanY = (Date.now() / 6) % this.h;
                     ctx.fillRect(this.x, this.y + scanY, this.w, 3);
 
                 } else {
-                    // --- 2. 카운트다운 후 뒷면 및 결과 차례대로 공개 연출 ---
                     const scaleX = Math.abs(Math.sin((this.flipProgress + 0.5) * Math.PI));
 
                     ctx.translate(midX, this.y + this.h / 2);
@@ -444,7 +382,6 @@
                     const showFront = this.flipProgress >= 0.5;
 
                     if (!showFront) {
-                        // 기본 뒷면 (미개봉 카드 디자인)
                         const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
                         grad.addColorStop(0, '#312e81');
                         grad.addColorStop(1, '#1e1b4b');
@@ -456,13 +393,6 @@
                         ctx.fill();
                         ctx.stroke();
 
-                        // 카드 순번 인덱스 서클
-                        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                        ctx.beginPath();
-                        ctx.arc(midX, this.y + this.h / 2 - 10, 20, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // 가변 폰트 크기 계산 (카드 너비 기준)
                         const backMainFontSize = Math.max(14, Math.floor(this.w * 0.22));
                         const backSubFontSize = Math.max(10, Math.floor(this.w * 0.13));
 
@@ -477,7 +407,6 @@
                         ctx.fillText('추첨중', midX, this.y + this.h / 2 + (this.h * 0.18));
 
                     } else {
-                        // 결과 앞면 카드 디자인
                         const isWin = this.result === 'WIN';
                         const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
 
@@ -497,7 +426,6 @@
                         ctx.fill();
                         ctx.stroke();
 
-                        // 앞면 가변 폰트 크기 및 간격 계산
                         const emojiSize = Math.max(20, Math.floor(this.w * 0.35));
                         const frontMainFontSize = Math.max(14, Math.floor(this.w * 0.22));
                         const frontSubFontSize = Math.max(10, Math.floor(this.w * 0.13));
@@ -522,7 +450,6 @@
             }
         }
 
-        // 당첨 축하 꽃가루 파티클 클래스
         class Particle {
             constructor(x, y) {
                 this.x = x;
@@ -558,7 +485,6 @@
             }
         }
 
-        // 둥근 사각형 유틸리티 함수
         function drawRoundRect(x, y, width, height, radius) {
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
@@ -579,7 +505,6 @@
             }
         }
 
-        // --- 추첨 시뮬레이터 초기화 및 구동 ---
         function initSimulator() {
             resizeCanvas();
 
@@ -590,29 +515,32 @@
             currentRevealIndex = -1;
             animState = 'COUNTDOWN';
 
-            // 중앙 정렬된 카드 레이아웃 배치 좌표 연산
             calculateGrid();
 
-            // 루프 제어권 갱신 및 활성화
             if (animationId) cancelAnimationFrame(animationId);
             animate();
         }
 
-        // 카드 수량별 그리드 동적 계산기 (화면 비례 및 마진 최적화)
+        let virtualWidth = 800;
+        let virtualHeight = 600;
+
         function calculateGrid() {
+            const rect = canvas.getBoundingClientRect();
+            virtualWidth = rect.width;
+            virtualHeight = rect.height;
+
             const count = totalDraws;
-            const startY = 250;  // 카운트다운 링 아래 안전 여백 확보
-            const endY = 580;
-            const areaWidth = 760;
-            const gap = 10;      // 카드 사이 여백 가시성 확대
+            const startY = virtualHeight * 0.38;
+            const endY = virtualHeight * 0.95;
+            const areaWidth = virtualWidth * 0.95;
+            const gap = Math.max(8, virtualWidth * 0.015);
 
             let cols = 1;
             let rows = 1;
             let bestCardW = 0;
             let bestCardH = 0;
 
-            // 최적의 행렬 구조 탐색 (가장 큰 카드 크기를 확보할 수 있는 조합)
-            for (let r = 1; r <= 5; r++) {
+            for (let r = 1; r <= 4; r++) {
                 let c = Math.ceil(count / r);
                 if (c > 12) continue;
 
@@ -622,17 +550,17 @@
                 let tempW = availableW / c;
                 let tempH = availableH / r;
 
-                // 카드 비율 1 : 1.35 고정
-                if (tempW * 1.35 > tempH) {
-                    tempW = tempH / 1.35;
+                const ratio = 16 / 9;
+                if (tempW * ratio > tempH) {
+                    tempW = tempH / ratio;
                 } else {
-                    tempH = tempW * 1.35;
+                    tempH = tempW * ratio;
                 }
 
-                // 상한선 제한
-                if (tempW > 110) {
-                    tempW = 110;
-                    tempH = 110 * 1.35;
+                const maxW = Math.min(120, virtualWidth * 0.12);
+                if (tempW > maxW) {
+                    tempW = maxW;
+                    tempH = maxW * ratio;
                 }
 
                 if (tempW > bestCardW) {
@@ -646,8 +574,7 @@
             const totalGridW = cols * bestCardW + (cols - 1) * gap;
             const totalGridH = rows * bestCardH + (rows - 1) * gap;
             
-            // 전체 컴포넌트 정중앙 정렬 좌표 산출
-            const startX = 20 + (areaWidth - totalGridW) / 2;
+            const startX = (virtualWidth - totalGridW) / 2;
             const originY = startY + ((endY - startY) - totalGridH) / 2;
 
             for (let i = 0; i < count; i++) {
@@ -659,37 +586,34 @@
             }
         }
 
-        // --- 메인 드로잉 루프 ---
         function animate() {
-            // 배경 페인팅
-            const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            const bg = ctx.createLinearGradient(0, 0, virtualWidth, virtualHeight);
             bg.addColorStop(0, '#111827');
             bg.addColorStop(0.45, '#090916');
             bg.addColorStop(1, '#020617');
             ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, virtualWidth, virtualHeight);
 
             ctx.save();
             ctx.globalAlpha = 0.12;
             ctx.strokeStyle = '#6366f1';
 
-            for (let x = 0; x < canvas.width; x += 40) {
+            for (let x = 0; x < virtualWidth; x += 40) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
+                ctx.lineTo(x, virtualHeight);
                 ctx.stroke();
             }
 
-            for (let y = 0; y < canvas.height; y += 40) {
+            for (let y = 0; y < virtualHeight; y += 40) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
+                ctx.lineTo(virtualWidth, y);
                 ctx.stroke();
             }
 
             ctx.restore();
 
-            // 1. 카운트다운 타이머 디스플레이 렌더링
             if (animState === 'COUNTDOWN') {
                 countdownTimer++;
 
@@ -698,7 +622,6 @@
 
                 document.getElementById('draw-status-text').innerText = `추첨 개시까지 ${secondsLeft}초...`;
 
-                // 네온 카운트다운 링 드로잉
                 drawCountdownHUD(secondsLeft);
 
                 if (countdownTimer >= countdownDuration) {
@@ -709,20 +632,17 @@
                 }
             }
 
-            // 2. 카드 일괄 상태 업데이트 및 렌더링
             cards.forEach(card => {
                 card.update();
                 card.draw();
             });
 
-            // 3. 폭죽 꽃가루 파티클 처리
             particles.forEach((p, idx) => {
                 p.update();
                 p.draw();
                 if (p.opacity <= 0) particles.splice(idx, 1);
             });
 
-            // 4. 개별 순차 개봉 진행 전이
             if (animState === 'REVEALING') {
                 revealTimer++;
                 if (currentRevealIndex < cards.length) {
@@ -744,51 +664,44 @@
             animationId = requestAnimationFrame(animate);
         }
 
-        // 상단 네온 카운트다운 그래픽 렌더러 (회전 인디케이터 스타일 반영)
         function drawCountdownHUD(secondsLeft) {
-            const progress = countdownTimer / countdownDuration; // 0 ~ 1 전체 진행도
+            const progress = countdownTimer / countdownDuration;
             const currentAngle = progress * Math.PI * 2 - Math.PI / 2;
 
             ctx.save();
-            ctx.translate(400, 120);
+            ctx.translate(virtualWidth / 2, virtualHeight * 0.18);
 
-            // 1. 배경 가이드 트랙 링 (은은한 블루)
             ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
             ctx.lineWidth = 8;
             ctx.beginPath();
             ctx.arc(0, 0, 55, 0, Math.PI * 2);
             ctx.stroke();
 
-            // 2. 대시 형태의 회전 로딩 효과 (첨부 이미지 연출 구현)
             ctx.save();
-            ctx.rotate(countdownTimer * 0.02); // 지속적으로 회전하는 효과
+            ctx.rotate(countdownTimer * 0.02);
             ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
             ctx.lineWidth = 6;
-            ctx.setLineDash([4, 8]); // 점선 형태로 분할
+            ctx.setLineDash([4, 8]);
             ctx.beginPath();
             ctx.arc(0, 0, 65, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
 
-            // 3. 실시간 진행도 게이지 링 (강렬한 글로우 레이어)
             ctx.shadowColor = '#38bdf8';
             ctx.shadowBlur = 16;
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 8;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            // 시간이 흐를수록 호가 채워지거나 줄어드는 동적 연출
             ctx.arc(0, 0, 55, -Math.PI / 2, currentAngle, false);
             ctx.stroke();
 
-            // 글로우 제거 후 내부 텍스트 영역 마감
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#0f172a';
             ctx.beginPath();
             ctx.arc(0, 0, 48, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. 중앙 카운트다운 숫자 표시
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 52px Pretendard';
             ctx.textAlign = 'center';
@@ -798,7 +711,6 @@
             ctx.restore();
         }
 
-        // 추첨 최종 귀결 수속
         function endDrawSequence() {
             let wins = 0;
             results.forEach(r => { if (r === 'WIN') wins++; });
@@ -806,11 +718,28 @@
             document.getElementById('draw-status-text').innerHTML =
                 `추첨 완료 - 전체 ${totalDraws}회 중 <span class="text-yellow-300 font-black">당첨 ${wins}회</span>, <span class="text-slate-300 font-black">꽝 ${totalDraws - wins}회</span>`;
 
-            // 설정 복귀 버튼 활성화
             const btnBack = document.getElementById('btn-back');
             btnBack.disabled = false;
             btnBack.className = "px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 cursor-pointer transition-all duration-150";
         }
+
+        // 브라우저 리사이즈 시 실시간 그리드 재정렬 이벤트 위임
+        window.addEventListener('resize', () => {
+            if (document.getElementById('draw-screen').classList.contains('hidden') === false) {
+                resizeCanvas();
+                const savedCardsStatus = cards.map(c => ({ isFlipped: c.isFlipped, flipProgress: c.flipProgress }));
+                cards = [];
+                calculateGrid();
+                cards.forEach((c, idx) => {
+                    if (savedCardsStatus[idx]) {
+                        c.isFlipped = savedCardsStatus[idx].isFlipped;
+                        c.flipProgress = savedCardsStatus[idx].flipProgress;
+                        c.y = c.targetY;
+                        c.opacity = 1;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 
