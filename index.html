@@ -14,7 +14,7 @@
             background: radial-gradient(circle at center, #1e1e38 0%, #0c0c1e 100%);
             color: #ffffff;
         }
-        /* 카드 3D 회전을 위한 스타일 */
+        /* 유리를 연상시키는 배경 패널 스타일 */
         .glass-panel {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(16px);
@@ -134,7 +134,7 @@
                     </div>
                     <p class="text-xs text-slate-400" id="draw-status-text">추첨 준비 중...</p>
                 </div>
-                <!-- 돌아가기 버튼 (처음엔 비활성화 혹은 끝난 후 활성화) -->
+                <!-- 돌아가기 버튼 -->
                 <button id="btn-back" onclick="goBack()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <i class="fa-solid fa-rotate-left"></i> 다시 설정하기 (설정 유지)
                 </button>
@@ -162,19 +162,18 @@
         const ctx = canvas.getContext('2d');
         let animationId;
         
-        // 물리 시뮬레이션용 공들 & 파티클들
-        let balls = [];
+        // 애니메이션 그래픽 데이터 구조
         let particles = [];
         let cards = [];
         
         // 단계 정의
-        // 'SHUFFLING': 1~2초간 섞임 -> 'REVEALING': 0.3초당 카드 한 장씩 공개 -> 'FINISHED': 완료
-        let animState = 'SHUFFLING'; 
-        let shuffleTimer = 0; // 프레임 단위 누적
-        const shuffleDuration = 90; // 1.5초 (60fps 기준)
+        // 'COUNTDOWN': 3초 카운트다운 및 카드 고속 셔플링 -> 'REVEALING': 0.3초당 카드 한 장씩 공개 -> 'FINISHED': 완료
+        let animState = 'COUNTDOWN'; 
+        let countdownTimer = 0; // 프레임 단위 누적 (60fps 기준)
+        const countdownDuration = 180; // 3초 (60fps = 180프레임)
         
         let revealTimer = 0;
-        const revealInterval = 18; // 0.3초 (60fps 기준)
+        const revealInterval = 18; // 0.3초 (60fps = 18프레임)
         let currentRevealIndex = -1; // 현재 오픈 중인 카드 인덱스
 
         // 커스텀 알림창 핸들러
@@ -211,12 +210,6 @@
         // 실시간 분수 미리보기
         document.getElementById('prob-num').addEventListener('input', updateFractionPreview);
         document.getElementById('prob-den').addEventListener('input', updateFractionPreview);
-
-        // 분수 포맷 상태 반영 헬퍼
-        function getFractionText(num, den) {
-            const pct = Math.min(100, Math.max(0, (num / den) * 100)).toFixed(1);
-            return `설정 확률: ${num}/${den} (${pct}%)`;
-        }
 
         function updateFractionPreview() {
             const num = parseInt(document.getElementById('prob-num').value) || 0;
@@ -303,93 +296,10 @@
             document.getElementById('setup-screen').classList.remove('hidden');
         }
 
-        // --- 물리 시뮬레이션 및 그래픽스 핵심 엔진 ---
-        
-        // 고해상도 DPI 대응을 고려한 캔버스 리사이즈
+        // 고해상도 해상도 설정 헬퍼
         function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            // 가상 논리적 설계 해상도 800 x 600을 기준으로 그림
             canvas.width = 800;
             canvas.height = 600;
-        }
-
-        class Ball {
-            constructor(x, y, isWin) {
-                this.x = x;
-                this.y = y;
-                this.isWin = isWin;
-                this.radius = 16;
-                // 사방으로 튀는 기초 속도 부여
-                this.vx = (Math.random() - 0.5) * 14;
-                this.vy = (Math.random() - 0.5) * 14;
-                this.color = isWin ? '#fbbf24' : '#64748b'; // Gold / Dark Slate
-                this.glow = isWin ? 'rgba(251, 191, 36, 0.4)' : 'rgba(100, 116, 139, 0.1)';
-            }
-
-            update(cx, cy, r) {
-                // 바닥 송풍 장치 시뮬레이션 (아래에서 위로 밀어내는 바람 가속도)
-                this.vy -= 0.18; 
-                this.vx += (Math.random() - 0.5) * 0.4; // 수평 난기류
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // 마찰 계수
-                this.vx *= 0.99;
-                this.vy *= 0.99;
-
-                // 원형 추첨 챔버 경계 검출 및 탄성 충돌
-                const dx = this.x - cx;
-                const dy = this.y - cy;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist > r - this.radius) {
-                    // 원의 법선 벡터 계산
-                    const nx = dx / dist;
-                    const ny = dy / dist;
-
-                    // 공의 속도와 법선 벡터 내적 계산
-                    const dot = this.vx * nx + this.vy * ny;
-
-                    // 반사 속도 계산 (완전 탄성에 가깝게 0.85 복원 계수 부여)
-                    this.vx = (this.vx - 2 * dot * nx) * 0.85;
-                    this.vy = (this.vy - 2 * dot * ny) * 0.85;
-
-                    // 충돌 위치 보정 (경계 밖으로 뚫고 나가지 못하게 바깥 벽 안으로 고정)
-                    this.x = cx + nx * (r - this.radius);
-                    this.y = cy + ny * (r - this.radius);
-                }
-            }
-
-            draw() {
-                ctx.save();
-                ctx.shadowColor = this.glow;
-                ctx.shadowBlur = 10;
-                
-                // 그라디언트로 빛나는 구체 표현
-                const grad = ctx.createRadialGradient(this.x - 5, this.y - 5, 2, this.x, this.y, this.radius);
-                if (this.isWin) {
-                    grad.addColorStop(0, '#fef08a');
-                    grad.addColorStop(1, '#d97706');
-                } else {
-                    grad.addColorStop(0, '#94a3b8');
-                    grad.addColorStop(1, '#334155');
-                }
-                
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 텍스트 라벨링
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = this.isWin ? '#451a03' : '#f8fafc';
-                ctx.font = 'bold 10px Pretendard';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.isWin ? '당첨' : '꽝', this.x, this.y);
-                ctx.restore();
-            }
         }
 
         class Card {
@@ -399,14 +309,16 @@
                 this.targetX = x;
                 this.targetY = y;
                 this.x = x;
-                // 초기에는 아래에서 위로 슬라이딩하며 올라오도록 오프셋 가미
-                this.y = y + 100; 
+                this.y = y + 100; // 아래에서 부드럽게 나타나는 오프셋
                 this.w = w;
                 this.h = h;
                 
-                this.flipProgress = 0; // 0: 뒷면, 0.5: 측면, 1: 앞면
+                this.flipProgress = 0; // 0: 뒷면, 1: 앞면
                 this.isFlipped = false;
                 this.opacity = 0;
+                
+                // 카운트다운 기간 동안 가짜로 깜빡일 상태 ('WIN' 또는 'LOSE')
+                this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
             }
 
             update() {
@@ -414,12 +326,19 @@
                 this.y += (this.targetY - this.y) * 0.12;
                 if (this.opacity < 1) this.opacity += 0.08;
 
+                // 카운트다운 기간 동안 무작위로 상태 고속 셔플
+                if (animState === 'COUNTDOWN') {
+                    if (Math.random() < 0.15) { // 약 15% 확률로 매 프레임마다 결과 반전
+                        this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
+                    }
+                }
+
                 // 플립 회전 진척도 업데이트
                 if (this.isFlipped && this.flipProgress < 1) {
                     this.flipProgress += 0.08;
                     if (this.flipProgress > 1) {
                         this.flipProgress = 1;
-                        // 당첨 완료 시 파티클 축포 방출!
+                        // 당첨 카드가 개봉되는 순간 금빛 폭죽 방출
                         if (this.result === 'WIN') {
                             spawnParticles(this.x + this.w / 2, this.y + this.h / 2);
                         }
@@ -431,92 +350,122 @@
                 ctx.save();
                 ctx.globalAlpha = Math.min(1, Math.max(0, this.opacity));
 
-                // 3D 회전 스케일링 효과를 모방한 렌더링 매트릭스 변환
-                const scaleX = Math.abs(Math.sin((this.flipProgress + 0.5) * Math.PI));
                 const midX = this.x + this.w / 2;
 
-                ctx.translate(midX, this.y + this.h / 2);
-                ctx.scale(scaleX, 1.0); // 가로 축만 수축하여 회전 표현
-                ctx.translate(-midX, -(this.y + this.h / 2));
-
-                // 0.5(수직 상태)를 기준으로 앞면 혹은 뒷면 결정
-                const showFront = this.flipProgress >= 0.5;
-
-                if (!showFront) {
-                    // 뒷면 (미공개 상태)
-                    const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
-                    grad.addColorStop(0, '#312e81');
-                    grad.addColorStop(1, '#1e1b4b');
-                    ctx.fillStyle = grad;
-                    ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
-                    ctx.lineWidth = 2;
-                    
-                    // 둥근 사각형 카드
-                    drawRoundRect(this.x, this.y, this.w, this.h, 12);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // 카드 번호 뱃지
-                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                    ctx.beginPath();
-                    ctx.arc(midX, this.y + this.h/2 - 10, 20, 0, Math.PI*2);
-                    ctx.fill();
-
-                    ctx.fillStyle = '#a5b4fc';
-                    ctx.font = '800 16px Pretendard';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(`${this.index + 1}`, midX, this.y + this.h/2 - 10);
-
-                    ctx.fillStyle = '#6366f1';
-                    ctx.font = '600 11px Pretendard';
-                    ctx.fillText('추첨중', midX, this.y + this.h/2 + 22);
-
-                } else {
-                    // 앞면 (결과 공개 상태)
-                    const isWin = this.result === 'WIN';
+                if (animState === 'COUNTDOWN') {
+                    // --- 1. 카운트다운 고속 셔플링 연출 ---
+                    const isWin = this.shuffleState === 'WIN';
                     const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
                     
                     if (isWin) {
-                        grad.addColorStop(0, '#fef08a'); // Gold 밝은 면
-                        grad.addColorStop(1, '#eab308'); // Gold 어두운 면
-                        ctx.strokeStyle = '#facc15';
+                        grad.addColorStop(0, '#1e1b4b');
+                        grad.addColorStop(1, '#311042');
+                        ctx.strokeStyle = 'rgba(234, 179, 8, 0.7)'; // 당첨 가능성 옐로우 광원
                     } else {
-                        grad.addColorStop(0, '#475569'); // 어두운 회색 슬레이트
-                        grad.addColorStop(1, '#334155');
-                        ctx.strokeStyle = '#64748b';
+                        grad.addColorStop(0, '#0f172a');
+                        grad.addColorStop(1, '#1e293b');
+                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)'; // 일반 블루 네온 광원
                     }
                     
                     ctx.fillStyle = grad;
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 2;
                     drawRoundRect(this.x, this.y, this.w, this.h, 12);
                     ctx.fill();
                     ctx.stroke();
 
-                    // 텍스트 라벨 그리기
-                    ctx.fillStyle = isWin ? '#713f12' : '#f8fafc';
+                    // 흔들리며 무작위로 교차하는 글자 출력
+                    ctx.fillStyle = isWin ? '#facc15' : '#6366f1';
+                    ctx.font = '800 16px Pretendard';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
+                    ctx.fillText(isWin ? '당첨' : '꽝', midX, this.y + this.h / 2);
 
-                    // 결과 등급 심볼
-                    ctx.font = isWin ? '30px Pretendard' : '22px Pretendard';
-                    ctx.fillText(isWin ? '🎉' : '💀', midX, this.y + this.h/2 - 18);
+                    // 디지털 스캔라인 빔 효과 연출
+                    ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+                    const scanY = (Date.now() / 6) % this.h;
+                    ctx.fillRect(this.x, this.y + scanY, this.w, 3);
 
-                    // 텍스트 결과값
-                    ctx.font = '800 16px Pretendard';
-                    ctx.fillText(isWin ? '당첨 !' : '꽝', midX, this.y + this.h/2 + 15);
+                } else {
+                    // --- 2. 카운트다운 후 뒷면 및 결과 차례대로 공개 연출 ---
+                    const scaleX = Math.abs(Math.sin((this.flipProgress + 0.5) * Math.PI));
 
-                    // 하단 회차 표기
-                    ctx.fillStyle = isWin ? '#a16207' : '#94a3b8';
-                    ctx.font = 'bold 11px Pretendard';
-                    ctx.fillText(`${this.index + 1}회차`, midX, this.y + this.h/2 + 36);
+                    ctx.translate(midX, this.y + this.h / 2);
+                    ctx.scale(scaleX, 1.0);
+                    ctx.translate(-midX, -(this.y + this.h / 2));
+
+                    const showFront = this.flipProgress >= 0.5;
+
+                    if (!showFront) {
+                        // 기본 뒷면 (미개봉 카드 디자인)
+                        const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
+                        grad.addColorStop(0, '#312e81');
+                        grad.addColorStop(1, '#1e1b4b');
+                        ctx.fillStyle = grad;
+                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
+                        ctx.lineWidth = 2;
+                        
+                        drawRoundRect(this.x, this.y, this.w, this.h, 12);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // 카드 순번 인덱스 서클
+                        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                        ctx.beginPath();
+                        ctx.arc(midX, this.y + this.h / 2 - 10, 20, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.fillStyle = '#a5b4fc';
+                        ctx.font = '800 16px Pretendard';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${this.index + 1}`, midX, this.y + this.h / 2 - 10);
+
+                        ctx.fillStyle = '#6366f1';
+                        ctx.font = '600 11px Pretendard';
+                        ctx.fillText('추첨중', midX, this.y + this.h / 2 + 22);
+
+                    } else {
+                        // 결과 앞면 카드 디자인
+                        const isWin = this.result === 'WIN';
+                        const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
+                        
+                        if (isWin) {
+                            grad.addColorStop(0, '#fef08a');
+                            grad.addColorStop(1, '#eab308');
+                            ctx.strokeStyle = '#facc15';
+                        } else {
+                            grad.addColorStop(0, '#475569');
+                            grad.addColorStop(1, '#334155');
+                            ctx.strokeStyle = '#64748b';
+                        }
+                        
+                        ctx.fillStyle = grad;
+                        ctx.lineWidth = 3;
+                        drawRoundRect(this.x, this.y, this.w, this.h, 12);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.fillStyle = isWin ? '#713f12' : '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        ctx.font = isWin ? '30px Pretendard' : '22px Pretendard';
+                        ctx.fillText(isWin ? '🎉' : '💀', midX, this.y + this.h / 2 - 18);
+
+                        ctx.font = '800 16px Pretendard';
+                        ctx.fillText(isWin ? '당첨 !' : '꽝', midX, this.y + this.h / 2 + 15);
+
+                        ctx.fillStyle = isWin ? '#a16207' : '#94a3b8';
+                        ctx.font = 'bold 11px Pretendard';
+                        ctx.fillText(`${this.index + 1}회차`, midX, this.y + this.h / 2 + 36);
+                    }
                 }
 
                 ctx.restore();
             }
         }
 
-        // 축하 파티클 (꽃가루) 클래스
+        // 당첨 축하 꽃가루 파티클 클래스
         class Particle {
             constructor(x, y) {
                 this.x = x;
@@ -525,10 +474,10 @@
                 const angle = Math.random() * Math.PI * 2;
                 const speed = Math.random() * 8 + 4;
                 this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed - 3; // 폭발 시 위쪽 벡터 가산
+                this.vy = Math.sin(angle) * speed - 3;
                 this.gravity = 0.25;
                 this.opacity = 1;
-                this.color = `hsl(${Math.random() * 40 + 35}, 100%, 60%)`; // 금빛, 황금빛 그라데이션 색 분포
+                this.color = `hsl(${Math.random() * 40 + 35}, 100%, 60%)`;
                 this.rotation = Math.random() * Math.PI;
                 this.rotationSpeed = (Math.random() - 0.5) * 0.2;
             }
@@ -547,12 +496,12 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
                 ctx.fillStyle = this.color;
-                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
                 ctx.restore();
             }
         }
 
-        // 둥근 사각형 그리기 헬퍼 유틸
+        // 둥근 사각형 유틸리티 함수
         function drawRoundRect(x, y, width, height, radius) {
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
@@ -567,69 +516,49 @@
             ctx.closePath();
         }
 
-        // 파티클 스폰 함수
         function spawnParticles(x, y) {
             for (let i = 0; i < 25; i++) {
                 particles.push(new Particle(x, y));
             }
         }
 
-        // --- 초기화 및 루프 실행 ---
+        // --- 추첨 시뮬레이터 초기화 및 구동 ---
         function initSimulator() {
             resizeCanvas();
             
-            balls = [];
             particles = [];
             cards = [];
-            shuffleTimer = 0;
+            countdownTimer = 0;
             revealTimer = 0;
             currentRevealIndex = -1;
-            animState = 'SHUFFLING';
+            animState = 'COUNTDOWN';
 
-            document.getElementById('draw-status-text').innerText = '추첨 챔버 활성화 - 마구 섞는 중...';
-
-            // 챔버 내부에 랜덤한 볼들 생성 (확률 비중에 가깝게 꽝/당첨 공 비율 생성)
-            const totalBalls = 30;
-            const winBallCount = Math.round(totalBalls * probability);
-            for (let i = 0; i < totalBalls; i++) {
-                // 당첨공과 꽝공 비율 분배
-                const isWin = i < winBallCount;
-                // 추첨기 중앙 기준 (X: 400, Y: 180)의 반경 80 내에 랜덤 분포시킴
-                const angle = Math.random() * Math.PI * 2;
-                const r = Math.random() * 70;
-                const bx = 400 + Math.cos(angle) * r;
-                const by = 180 + Math.sin(angle) * r;
-                balls.push(new Ball(bx, by, isWin));
-            }
-
-            // 회차별 카드 격자(그리드) 위치 자동 설계 연산
+            // 중앙 정렬된 카드 레이아웃 배치 좌표 연산
             calculateGrid();
 
-            // 애니메이션 인터벌 구동 시작
+            // 루프 제어권 갱신 및 활성화
             if (animationId) cancelAnimationFrame(animationId);
             animate();
         }
 
-        // 개별 카드의 크기와 최적의 그리드 배치 자동 연산
+        // 카드 수량별 그리드 동적 계산기
         function calculateGrid() {
             const count = totalDraws;
-            const startY = 360;  // 카드 영역 상단 시작점
-            const endY = 570;    // 카드 영역 하단 한계점
-            const areaWidth = 760; // 좌우 여백 제외 실 폭
+            const startY = 280;  // 물리적 추첨 공간 제외 후 더 여유로워진 가변 한계 영역 시작선
+            const endY = 560;
+            const areaWidth = 760;
 
-            // 최적의 열(Cols)과 행(Rows) 계산
             let cols = 1;
             let rows = 1;
             let maxArea = 0;
 
             for (let r = 1; r <= 4; r++) {
                 let c = Math.ceil(count / r);
-                if (c > 12) continue; // 너무 좁은 세로 방지
+                if (c > 12) continue;
 
                 const tempW = (areaWidth - (c - 1) * 8) / c;
                 const tempH = ((endY - startY) - (r - 1) * 8) / r;
                 
-                // 비율 왜곡 방지 및 최대 크기 조건 검출
                 const size = Math.min(tempW, tempH * 0.9); 
                 if (size > maxArea) {
                     maxArea = size;
@@ -638,11 +567,9 @@
                 }
             }
 
-            // 고정 비율로 크기 제한 설정
-            let cardW = Math.min(90, (areaWidth - (cols - 1) * 8) / cols);
-            let cardH = Math.min(110, cardW * 1.25);
+            let cardW = Math.min(95, (areaWidth - (cols - 1) * 8) / cols);
+            let cardH = Math.min(120, cardW * 1.25);
 
-            // 산출된 카드들의 최종 중심 정렬 계산
             const totalGridW = cols * cardW + (cols - 1) * 8;
             const totalGridH = rows * cardH + (rows - 1) * 8;
             const startX = 20 + (areaWidth - totalGridW) / 2;
@@ -657,58 +584,48 @@
             }
         }
 
-        // --- 메인 드로잉 애니메이션 루프 ---
+        // --- 메인 드로잉 루프 ---
         function animate() {
-            // 배경 페인팅 (반투명 잔상 효과는 남기지 않고 청결하게 지움)
+            // 배경 페인팅
             ctx.fillStyle = '#090916';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. 송풍 추첨기 챔버 그리기 (상단 영역)
-            drawChamber();
+            // 1. 카운트다운 타이머 디스플레이 렌더링
+            if (animState === 'COUNTDOWN') {
+                countdownTimer++;
+                
+                let secondsLeft = 3 - Math.floor(countdownTimer / 60);
+                if (secondsLeft < 1) secondsLeft = 1;
 
-            // 2. 물리 구체(공) 상태 갱신 및 드로잉
-            balls.forEach(ball => {
-                if (animState === 'SHUFFLING') {
-                    ball.update(400, 180, 110); // 원 내부에서 바운싱
-                } else {
-                    // 추첨 완료 단계에서는 중력으로 슬그머니 굴러 떨어짐 효과
-                    ball.vy += 0.4;
-                    ball.x += ball.vx;
-                    ball.y += ball.vy;
-                    // 바닥 충돌 처리
-                    if (ball.y > 620) {
-                        ball.y = 620;
-                        ball.vy = 0;
-                    }
+                document.getElementById('draw-status-text').innerText = `추첨 개시까지 ${secondsLeft}초...`;
+                
+                // 네온 카운트다운 링 드로잉
+                drawCountdownHUD(secondsLeft);
+
+                if (countdownTimer >= countdownDuration) {
+                    animState = 'REVEALING';
+                    currentRevealIndex = 0;
+                    revealTimer = 0;
+                    document.getElementById('draw-status-text').innerText = '카운트다운 종료! 순차 개봉을 시작합니다.';
                 }
-                ball.draw();
-            });
+            }
 
-            // 3. 결과 카드 업데이트 및 렌더링
+            // 2. 카드 일괄 상태 업데이트 및 렌더링
             cards.forEach(card => {
                 card.update();
                 card.draw();
             });
 
-            // 4. 축하 꽃가루 파티클 렌더링
+            // 3. 폭죽 꽃가루 파티클 처리
             particles.forEach((p, idx) => {
                 p.update();
                 p.draw();
                 if (p.opacity <= 0) particles.splice(idx, 1);
             });
 
-            // 5. 프레임 상태 머신 전이 처리
-            if (animState === 'SHUFFLING') {
-                shuffleTimer++;
-                if (shuffleTimer >= shuffleDuration) {
-                    animState = 'REVEALING';
-                    currentRevealIndex = 0;
-                    document.getElementById('draw-status-text').innerText = '셔플링 완료! 순차 개봉을 시작합니다.';
-                }
-            } else if (animState === 'REVEALING') {
+            // 4. 개별 순차 개봉 진행 전이
+            if (animState === 'REVEALING') {
                 revealTimer++;
-                
-                // 첫번째 카드가 즉각 뒤집어지도록 흐름 제어 및 간격 처리
                 if (currentRevealIndex < cards.length) {
                     const currentCard = cards[currentRevealIndex];
                     if (!currentCard.isFlipped) {
@@ -720,7 +637,6 @@
                         currentRevealIndex++;
                     }
                 } else {
-                    // 모든 개봉 프로세스 종료
                     animState = 'FINISHED';
                     endDrawSequence();
                 }
@@ -729,61 +645,50 @@
             animationId = requestAnimationFrame(animate);
         }
 
-        // 추첨기 챔버 그래픽 요소 빌드
-        function drawChamber() {
+        // 상단 네온 카운트다운 그래픽 렌더러
+        function drawCountdownHUD(secondsLeft) {
+            const pulseProgress = (countdownTimer % 60) / 60;
+            const pulseScale = 1.0 + Math.sin(pulseProgress * Math.PI) * 0.08; // 자연스러운 수축 팽창 모션
+
             ctx.save();
-            // 유리 챔버 외곽선 광원효과
-            ctx.shadowColor = 'rgba(99, 102, 241, 0.4)';
-            ctx.shadowBlur = 18;
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 4;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-            
+            ctx.translate(400, 140);
+            ctx.scale(pulseScale, pulseScale);
+
+            // 네온 아웃글로우 이펙트 원
+            ctx.shadowColor = 'rgba(99, 102, 241, 0.6)';
+            ctx.shadowBlur = 24;
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.arc(400, 180, 110, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.arc(0, 0, 64, 0, Math.PI * 2);
             ctx.stroke();
 
-            // 유리광택 디테일 곡선 묘사
+            // 내부 불투명 원형 코어
             ctx.shadowBlur = 0;
-            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-            ctx.lineWidth = 2;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.beginPath();
-            ctx.arc(400, 180, 100, Math.PI * 1.1, Math.PI * 1.5);
-            ctx.stroke();
-
-            // 추첨기 하단 스탠드 묘사
-            ctx.fillStyle = '#1e1b4b';
-            ctx.strokeStyle = '#4f46e5';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(340, 280);
-            ctx.lineTo(310, 315);
-            ctx.lineTo(490, 315);
-            ctx.lineTo(460, 280);
-            ctx.closePath();
+            ctx.arc(0, 0, 58, 0, Math.PI * 2);
             ctx.fill();
-            ctx.stroke();
 
-            // 바람 구멍 디테일 팬
-            ctx.fillStyle = '#312e81';
-            ctx.beginPath();
-            ctx.arc(400, 285, 20, 0, Math.PI, true);
-            ctx.fill();
+            // 숫자 텍스트 표시
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 64px Pretendard';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(secondsLeft, 0, -2);
 
             ctx.restore();
         }
 
-        // 모든 카드가 완벽히 개봉되고 난 최종 수속
+        // 추첨 최종 귀결 수속
         function endDrawSequence() {
-            // 꽝, 당첨 집계 분석
             let wins = 0;
             results.forEach(r => { if (r === 'WIN') wins++; });
             
             document.getElementById('draw-status-text').innerHTML = 
                 `추첨 종료: 전체 ${totalDraws}회 시행 중 <span class="text-yellow-400 font-extrabold">당첨 ${wins}회</span> / <span class="text-slate-400 font-extrabold">꽝 ${totalDraws - wins}회</span> 기록`;
 
-            // 다시 시작 버튼 활성화 처리
+            // 설정 복귀 버튼 활성화
             const btnBack = document.getElementById('btn-back');
             btnBack.disabled = false;
             btnBack.className = "px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 cursor-pointer transition-all duration-150";
