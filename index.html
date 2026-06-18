@@ -588,46 +588,64 @@
             animate();
         }
 
-        // 카드 수량별 그리드 동적 계산기
+        // 카드 수량별 그리드 동적 계산기 (화면 비례 및 마진 최적화)
         function calculateGrid() {
             const count = totalDraws;
-            const startY = 280;  // 물리적 추첨 공간 제외 후 더 여유로워진 가변 한계 영역 시작선
-            const endY = 560;
+            const startY = 250;  // 카운트다운 링 아래 안전 여백 확보
+            const endY = 580;
             const areaWidth = 760;
+            const gap = 10;      // 카드 사이 여백 가시성 확대
 
             let cols = 1;
             let rows = 1;
-            let maxArea = 0;
+            let bestCardW = 0;
+            let bestCardH = 0;
 
-            for (let r = 1; r <= 4; r++) {
+            // 최적의 행렬 구조 탐색 (가장 큰 카드 크기를 확보할 수 있는 조합)
+            for (let r = 1; r <= 5; r++) {
                 let c = Math.ceil(count / r);
                 if (c > 12) continue;
 
-                const tempW = (areaWidth - (c - 1) * 8) / c;
-                const tempH = ((endY - startY) - (r - 1) * 8) / r;
+                const availableW = areaWidth - (c - 1) * gap;
+                const availableH = (endY - startY) - (r - 1) * gap;
 
-                const size = Math.min(tempW, tempH * 0.9);
-                if (size > maxArea) {
-                    maxArea = size;
+                let tempW = availableW / c;
+                let tempH = availableH / r;
+
+                // 카드 비율 1 : 1.35 고정
+                if (tempW * 1.35 > tempH) {
+                    tempW = tempH / 1.35;
+                } else {
+                    tempH = tempW * 1.35;
+                }
+
+                // 상한선 제한
+                if (tempW > 110) {
+                    tempW = 110;
+                    tempH = 110 * 1.35;
+                }
+
+                if (tempW > bestCardW) {
+                    bestCardW = tempW;
+                    bestCardH = tempH;
                     cols = c;
                     rows = r;
                 }
             }
 
-            let cardW = Math.min(95, (areaWidth - (cols - 1) * 8) / cols);
-            let cardH = Math.min(120, cardW * 1.25);
-
-            const totalGridW = cols * cardW + (cols - 1) * 8;
-            const totalGridH = rows * cardH + (rows - 1) * 8;
+            const totalGridW = cols * bestCardW + (cols - 1) * gap;
+            const totalGridH = rows * bestCardH + (rows - 1) * gap;
+            
+            // 전체 컴포넌트 정중앙 정렬 좌표 산출
             const startX = 20 + (areaWidth - totalGridW) / 2;
             const originY = startY + ((endY - startY) - totalGridH) / 2;
 
             for (let i = 0; i < count; i++) {
                 const rIndex = Math.floor(i / cols);
                 const cIndex = i % cols;
-                const cx = startX + cIndex * (cardW + 8);
-                const cy = originY + rIndex * (cardH + 8);
-                cards.push(new Card(i, results[i], cx, cy, cardW, cardH));
+                const cx = startX + cIndex * (bestCardW + gap);
+                const cy = originY + rIndex * (bestCardH + gap);
+                cards.push(new Card(i, results[i], cx, cy, bestCardW, bestCardH));
             }
         }
 
@@ -716,34 +734,53 @@
             animationId = requestAnimationFrame(animate);
         }
 
-        // 상단 네온 카운트다운 그래픽 렌더러
+        // 상단 네온 카운트다운 그래픽 렌더러 (회전 인디케이터 스타일 반영)
         function drawCountdownHUD(secondsLeft) {
-            const pulseProgress = (countdownTimer % 60) / 60;
-            const pulseScale = 1.0 + Math.sin(pulseProgress * Math.PI) * 0.08; // 자연스러운 수축 팽창 모션
+            const progress = countdownTimer / countdownDuration; // 0 ~ 1 전체 진행도
+            const currentAngle = progress * Math.PI * 2 - Math.PI / 2;
 
             ctx.save();
-            ctx.translate(400, 140);
-            ctx.scale(pulseScale, pulseScale);
+            ctx.translate(400, 120);
 
-            // 네온 아웃글로우 이펙트 원
-            ctx.shadowColor = 'rgba(99, 102, 241, 0.6)';
-            ctx.shadowBlur = 24;
-            ctx.strokeStyle = '#6366f1';
-            ctx.lineWidth = 5;
+            // 1. 배경 가이드 트랙 링 (은은한 블루)
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+            ctx.lineWidth = 8;
             ctx.beginPath();
-            ctx.arc(0, 0, 64, 0, Math.PI * 2);
+            ctx.arc(0, 0, 55, 0, Math.PI * 2);
             ctx.stroke();
 
-            // 내부 불투명 원형 코어
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            // 2. 대시 형태의 회전 로딩 효과 (첨부 이미지 연출 구현)
+            ctx.save();
+            ctx.rotate(countdownTimer * 0.02); // 지속적으로 회전하는 효과
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([4, 8]); // 점선 형태로 분할
             ctx.beginPath();
-            ctx.arc(0, 0, 58, 0, Math.PI * 2);
+            ctx.arc(0, 0, 65, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // 3. 실시간 진행도 게이지 링 (강렬한 글로우 레이어)
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 16;
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            // 시간이 흐를수록 호가 채워지거나 줄어드는 동적 연출
+            ctx.arc(0, 0, 55, -Math.PI / 2, currentAngle, false);
+            ctx.stroke();
+
+            // 글로우 제거 후 내부 텍스트 영역 마감
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(0, 0, 48, 0, Math.PI * 2);
             ctx.fill();
 
-            // 숫자 텍스트 표시
+            // 4. 중앙 카운트다운 숫자 표시
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 64px Pretendard';
+            ctx.font = '900 52px Pretendard';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(secondsLeft, 0, -2);
