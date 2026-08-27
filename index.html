@@ -50,12 +50,17 @@
             border-color: rgba(244, 63, 94, 0.9);
             box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9), 0 0 25px rgba(244, 63, 94, 0.5);
         }
-        .slot-cell.stopped-win {
+        .slot-cell.stopped-fanfare {
             border-color: rgba(250, 204, 21, 1);
             box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.6);
             background: linear-gradient(180deg, #2e1065 0%, #4c1d95 50%, #090d16 100%);
         }
-        .slot-cell.stopped-lose {
+        .slot-cell.stopped-normal {
+            border-color: rgba(52, 211, 153, 0.9);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(52, 211, 153, 0.4);
+            background: linear-gradient(180deg, #064e3b 0%, #065f46 50%, #090d16 100%);
+        }
+        .slot-cell.stopped-fail {
             border-color: rgba(100, 116, 139, 0.7);
             box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
@@ -112,7 +117,6 @@
         
         <!-- HEADER -->
         <header class="relative text-center py-2 mb-2">
-            <!-- 가이드 버튼 (우측 상단) -->
             <button onclick="openGuideModal()" class="absolute right-1 top-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-amber-300 transition active:scale-95 shadow">
                 사용 가이드
             </button>
@@ -175,7 +179,7 @@
                 <!-- 옵션 목록 입력 영역 -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <label class="text-xs text-pink-200">선택지 항목 및 확률 설정</label>
+                        <label class="text-xs text-pink-200">선택지 항목, 확률 및 효과음 설정</label>
                         <span id="prob-hint-text" class="text-[11px] text-slate-400">퍼센트 합계가 정확히 100%여야 합니다.</span>
                     </div>
 
@@ -256,11 +260,11 @@
 
         <!-- FOOTER -->
         <footer class="text-center text-[11px] text-slate-500 py-2">
-            두근두근 교실 멀티 슬롯머신 &bull; DnfBitbeatV2 Game Font & Ultra-Fast Downward Reel
+            두근두근 교실 멀티 슬롯머신 &bull; DnfBitbeatV2 Game Font & Sound Priority Engine
         </footer>
     </div>
 
-    <!-- 3. 사용 가이드 모달 (Guide Modal) -->
+    <!-- 3. 사용 가이드 모달 -->
     <div id="guide-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel bg-slate-900/95 border border-white/20 rounded-3xl max-w-xl w-full p-6 text-left shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             
@@ -273,7 +277,6 @@
 
             <div class="space-y-4 text-xs md:text-sm text-slate-300 leading-relaxed">
                 
-                <!-- 1. 기본 기능 -->
                 <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
                     <div class="text-amber-300 font-bold text-sm">1. 주요 기능 안내</div>
                     <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
@@ -283,21 +286,21 @@
                     </ul>
                 </div>
 
-                <!-- 2. 사운드 연출 -->
                 <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
-                    <div class="text-pink-300 font-bold text-sm">2. 상황별 사운드 연출</div>
+                    <div class="text-pink-300 font-bold text-sm">2. 항목별 효과음 지정 시스템</div>
                     <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
-                        <li><strong>당첨자가 1명이라도 있을 때:</strong> 축하 팡파레와 화려한 꽃가루 폭죽 효과</li>
-                        <li><strong>전원 꽝일 때:</strong> 익살스러운 실망 사운드 재생</li>
+                        <li>각 항목마다 <strong>[팡파레 / 기본음 / 실망음]</strong>을 직접 지정할 수 있습니다.</li>
+                        <li><strong>팡파레 지정 항목이 1개라도 나온 경우:</strong> 🎺 축하 팡파레 + 꽃가루 폭죽</li>
+                        <li><strong>기본음 지정 항목이 나온 경우:</strong> 🔔 경쾌한 딩동댕 성공 알림음</li>
+                        <li><strong>전부 실망음 지정 항목만 나온 경우:</strong> 💀 익살스러운 실망 사운드 (Womp Womp)</li>
                     </ul>
                 </div>
 
-                <!-- 3. 교실 수업 활용 팁 -->
                 <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
                     <div class="text-sky-300 font-bold text-sm">3. 교실 실전 활용 팁</div>
                     <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
-                        <li><strong>학급 이벤트 & 당번:</strong> 간식 뽑기, 청소 당번, 자리 배치 등에 활용</li>
-                        <li><strong>발표자 뽑기:</strong> 당첨(발표), 꽝(통과) 설정 후 번호순으로 슬롯 개수 맞춰 추첨</li>
+                        <li><strong>청소 당번 뽑기 (역발상):</strong> 청소당번 항목에 [실망음], 통과 항목에 [팡파레]를 지정해 분위기 UP!</li>
+                        <li><strong>차등 상품 이벤트:</strong> 1등(팡파레), 2등(기본음), 꽝(실망음)으로 세분화 설정</li>
                         <li><strong>수학 확률 수업:</strong> "1/5 확률로 30번을 뽑으면 정말 6번 정도 나올까?"<br>
                             하단의 [누적 통계]를 통해 대수의 법칙(통계적 확률) 시각적 탐구 교구로 활용
                         </li>
@@ -321,9 +324,10 @@
         let drawSlotCount = 5;     
         let isSpinning = false;
 
+        // soundType: 'fanfare' | 'normal' | 'fail'
         let options = [
-            { id: 1, name: '당첨', val: 20 },
-            { id: 2, name: '꽝', val: 80 }
+            { id: 1, name: '당첨', val: 20, soundType: 'fanfare' },
+            { id: 2, name: '꽝', val: 80, soundType: 'fail' }
         ];
 
         let historyLogs = [];
@@ -378,12 +382,13 @@
             } catch(e) {}
         }
 
+        // 1순위: 대형 팡파레
         function playFanfare() {
             if (!document.getElementById('sound-toggle').checked) return;
             try {
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
-                const notes = [523.25, 659.25, 783.99, 1046.50];
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
                 notes.forEach((freq, idx) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -400,6 +405,30 @@
             } catch(e) {}
         }
 
+        // 2순위: 경쾌한 기본 알림음 (도-미-솔 딩동댕)
+        function playNormalSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    gain.gain.setValueAtTime(0, now + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.2, now + idx * 0.1 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.25);
+                });
+            } catch(e) {}
+        }
+
+        // 3순위: 실망스러운 사운드 (하향 4음계)
         function playFailSound() {
             if (!document.getElementById('sound-toggle').checked) return;
             try {
@@ -449,12 +478,10 @@
             document.getElementById('guide-modal').classList.add('hidden');
         }
 
-        // ESC 키로 모달 닫기 지원
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeGuideModal();
         });
 
-        // 모달 배경 클릭 시 닫기
         document.getElementById('guide-modal').addEventListener('click', (e) => {
             if (e.target.id === 'guide-modal') closeGuideModal();
         });
@@ -502,7 +529,8 @@
                 options.push({
                     id: nextId,
                     name: `항목 ${String.fromCharCode(64 + nextId)}`,
-                    val: probMode === 'percent' ? 0 : 1
+                    val: probMode === 'percent' ? 0 : 1,
+                    soundType: 'normal' // 새로 추가되는 항목은 기본음이 디폴트
                 });
             }
             if (options.length > count) {
@@ -534,16 +562,27 @@
 
             options.forEach((opt, idx) => {
                 const row = document.createElement('div');
-                row.className = "flex items-center gap-2 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800";
+                row.className = "flex items-center gap-1.5 md:gap-2 bg-slate-900/90 p-2 md:p-2.5 rounded-2xl border border-slate-800";
                 row.innerHTML = `
                     <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">${idx + 1}</span>
+                    
+                    <!-- 항목 이름 입력 -->
                     <input type="text" value="${opt.name}" oninput="updateOptName(${idx}, this.value)" placeholder="항목 이름" 
-                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs md:text-sm text-slate-100 focus:border-pink-500 focus:outline-none">
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs md:text-sm text-slate-100 focus:border-pink-500 focus:outline-none min-w-0">
+                    
+                    <!-- 확률/가중치 입력 -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
                         <input type="number" min="0" step="any" value="${opt.val}" oninput="updateOptVal(${idx}, this.value)"
-                            class="w-16 bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-xs md:text-sm text-center text-amber-300 focus:border-pink-500 focus:outline-none">
-                        <span class="text-xs text-slate-400 w-7">${unit}</span>
+                            class="w-14 md:w-16 bg-slate-800 border border-slate-700 rounded-xl px-1.5 py-1.5 text-xs md:text-sm text-center text-amber-300 focus:border-pink-500 focus:outline-none">
+                        <span class="text-[11px] text-slate-400 w-6">${unit}</span>
                     </div>
+
+                    <!-- 효과음 선택 드롭다운 -->
+                    <select onchange="updateOptSound(${idx}, this.value)" class="bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-pink-200 focus:border-pink-500 focus:outline-none cursor-pointer flex-shrink-0">
+                        <option value="fanfare" ${opt.soundType === 'fanfare' ? 'selected' : ''}>팡파레</option>
+                        <option value="normal" ${opt.soundType === 'normal' ? 'selected' : ''}>기본음</option>
+                        <option value="fail" ${opt.soundType === 'fail' ? 'selected' : ''}>실망음</option>
+                    </select>
                 `;
                 container.appendChild(row);
             });
@@ -553,6 +592,9 @@
         function updateOptVal(idx, v) { 
             options[idx].val = parseFloat(v) || 0; 
             validatePercentages(); 
+        }
+        function updateOptSound(idx, v) {
+            options[idx].soundType = v;
         }
 
         function validatePercentages() {
@@ -662,20 +704,6 @@
         /* ----------------------------------------------------
            5. 아래로 광속 롤링(Downward Fast Spin) 엔진
         ---------------------------------------------------- */
-        function checkIfLoseItem(name, itemIndex) {
-            const loseKeywords = ['꽝', '다음', '실패', '탈락', '노당첨', 'x', 'lose'];
-            const lower = name.toLowerCase();
-            const hasKeyword = loseKeywords.some(kw => lower.includes(kw));
-
-            if (hasKeyword) return true;
-
-            const anyHasKeyword = options.some(o => loseKeywords.some(kw => o.name.toLowerCase().includes(kw)));
-            if (!anyHasKeyword && itemIndex === options.length - 1) {
-                return true;
-            }
-            return false;
-        }
-
         function getRandomPickedItem() {
             const totalWeight = options.reduce((sum, o) => sum + (parseFloat(o.val) || 0), 0);
             const rand = Math.random() * totalWeight;
@@ -721,7 +749,7 @@
                 const slotEl = document.getElementById(`slot-item-${i}`);
                 const trackEl = document.getElementById(`reel-track-${i}`);
 
-                slotEl.classList.remove('stopped-win', 'stopped-lose');
+                slotEl.classList.remove('stopped-fanfare', 'stopped-normal', 'stopped-fail');
                 slotEl.classList.add('spinning');
 
                 trackEl.innerHTML = stripHtml;
@@ -744,13 +772,18 @@
                     slotEl.classList.remove('spinning');
                     trackEl.classList.remove('is-rolling');
 
-                    const isLose = checkIfLoseItem(res.name, res.itemIdx);
-                    const textColor = isLose ? 'text-slate-400' : 'text-amber-300';
+                    let textColor = 'text-amber-300';
 
-                    if (isLose) {
-                        slotEl.classList.add('stopped-lose');
+                    // 항목별 지정된 soundType에 따라 슬롯 테두리/배경 스타일 적용
+                    if (res.soundType === 'fanfare') {
+                        slotEl.classList.add('stopped-fanfare');
+                        textColor = 'text-amber-300';
+                    } else if (res.soundType === 'normal') {
+                        slotEl.classList.add('stopped-normal');
+                        textColor = 'text-emerald-300';
                     } else {
-                        slotEl.classList.add('stopped-win');
+                        slotEl.classList.add('stopped-fail');
+                        textColor = 'text-slate-400';
                     }
 
                     trackEl.innerHTML = `<div class="reel-item ${fontSizeClass} ${textColor} drop-shadow-md">${res.name}</div>`;
@@ -768,6 +801,7 @@
                     const stopDelay = drawSlotCount > 15 ? 50 : (drawSlotCount > 5 ? 85 : 160);
                     setTimeout(stopNextSlot, stopDelay);
                 } else {
+                    // 전체 멈춤 완료 후 최종 사운드 우선순위 판정
                     clearInterval(tickInterval);
                     isSpinning = false;
                     spinBtn.disabled = false;
@@ -775,14 +809,20 @@
                     backBtn.classList.remove('opacity-30', 'pointer-events-none');
                     spinBtnText.innerText = "전체 슬롯 돌리기!";
 
-                    const hasWinner = slotResults.some(r => !checkIfLoseItem(r.name, r.itemIdx));
+                    const hasFanfare = slotResults.some(r => r.soundType === 'fanfare');
+                    const hasNormal = slotResults.some(r => r.soundType === 'normal');
 
-                    if (hasWinner) {
+                    if (hasFanfare) {
+                        // 1순위: 팡파레 항목이 1개라도 있는 경우
                         if (typeof confetti === 'function') {
                             confetti({ particleCount: 130, spread: 85, origin: { y: 0.6 } });
                         }
                         playFanfare();
+                    } else if (hasNormal) {
+                        // 2순위: 팡파레는 없지만 기본음 항목이 있는 경우
+                        playNormalSound();
                     } else {
+                        // 3순위: 전부 실망음 항목만 나온 경우
                         playFailSound();
                     }
 
