@@ -1,746 +1,592 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학생 추첨 시스템</title>
+    <title>두근두근 만능 확률 뽑기</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
-
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.35), transparent 32%),
-                radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.22), transparent 28%),
-                radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.18), transparent 35%),
-                linear-gradient(135deg, #070816 0%, #101426 45%, #080a13 100%);
-            color: #ffffff;
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        jua: ['Jua', 'sans-serif'],
+                        sans: ['Noto Sans KR', 'sans-serif']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                        }
+                    }
+                }
+            }
         }
-
-        /* 유리를 연상시키는 배경 패널 스타일 */
-        .glass-panel {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.045));
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow:
-                0 30px 90px rgba(0, 0, 0, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            min-height: 100vh;
+        }
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+        .slot-window {
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(244, 63, 94, 0.4);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(244, 63, 94, 0.9); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
         }
     </style>
 </head>
-
-<body class="min-h-screen flex items-center justify-center p-4 overflow-x-hidden relative">
-
-    <div class="pointer-events-none fixed inset-0 overflow-hidden">
-        <div class="absolute -top-24 -left-24 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/4 -right-24 w-80 h-80 bg-sky-400/10 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-28 left-1/3 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
-    </div>
-
-    <div class="w-full max-w-6xl glass-panel rounded-[2rem] shadow-2xl p-6 md:p-8 relative z-10">
-
-        <div id="custom-alert" class="hidden fixed inset-0 flex items-center justify-center z-50 px-4">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-            <div class="bg-slate-800 border border-red-500/30 rounded-2xl p-6 max-w-sm w-full relative z-10 text-center shadow-2xl transform scale-95 transition-transform duration-200">
-                <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2">오류가 발생했습니다</h3>
-                <p id="alert-message" class="text-slate-300 text-sm mb-6"></p>
-                <button onclick="closeAlert()" class="w-full py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 transition text-white font-semibold rounded-xl">확인</button>
+<body class="text-slate-100 flex flex-col min-h-screen p-3 md:p-6">
+    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col">
+        <!-- Header -->
+        <header class="text-center py-4 mb-4">
+            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 px-4 py-1.5 rounded-full mb-2">
+                <i class="fa-solid fa-clover text-pink-400"></i>
+                <span class="text-sm font-semibold text-pink-200">두근두근 만능 이벤트</span>
             </div>
-        </div>
+            <h1 class="text-3xl md:text-5xl font-jua tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-pink-400 to-purple-300 drop-shadow-md">
+                🎰 두근두근 확률 뽑기
+            </h1>
+        </header>
 
-        <div id="setup-screen" class="space-y-6">
-            <div class="text-center">
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-500/10 border border-indigo-400/20 text-indigo-200 rounded-full text-xs font-bold tracking-wider uppercase shadow-lg shadow-indigo-500/10">
-                    <i class="fa-solid fa-clover text-emerald-300"></i>
-                    LUCKY DRAW
-                </span>
-                <h1 class="text-4xl md:text-5xl font-black mt-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-indigo-300 to-fuchsia-300 drop-shadow">
-                    학생 추첨 시뮬레이터
-                </h1>
-                <p class="text-slate-400 text-sm mt-1">확률과 횟수를 지정하여 공정한 추첨을 시작하세요.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <div class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-indigo-300">
-                        <i class="fa-solid fa-percentage"></i> 확률 방식 선택
-                    </h2>
-
-                    <div class="flex bg-black/30 p-1.5 rounded-2xl border border-white/5">
-                        <button onclick="setProbType('fraction')" id="btn-fraction" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20">
-                            분수 입력
-                        </button>
-                        <button onclick="setProbType('percent')" id="btn-percent" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 text-slate-400 hover:text-white hover:bg-white/5">
-                            퍼센트(%) 입력
-                        </button>
-                    </div>
-
-                    <div id="fraction-area" class="space-y-2">
-                        <label class="block text-xs text-slate-400">당첨 확률 (분수 형태)</label>
-                        <div class="flex items-center justify-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
-                            <input type="number" id="prob-num" value="1" min="1" class="w-20 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
-                            <span class="text-xl font-bold text-slate-500">/</span>
-                            <input type="number" id="prob-den" value="5" min="1" class="w-20 bg-slate-800 text-center py-2 text-lg font-bold rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 transition text-indigo-400">
-                        </div>
-                        <p class="text-[11px] text-slate-400 text-center" id="fraction-preview">현재 확률: 20% (5번 중 1번 당첨)</p>
-                    </div>
-
-                    <div id="percent-area" class="space-y-2 hidden">
-                        <label class="block text-xs text-slate-400">당첨 확률 (퍼센트 수치)</label>
-                        <div class="flex items-center justify-center gap-2 bg-black/20 p-3 rounded-xl border border-white/5">
-                            <input type="number" id="prob-percent" value="20" min="0" max="100" step="any" class="w-28 bg-slate-950/70 text-center py-2.5 text-xl font-black rounded-xl border border-white/10 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 transition text-emerald-300 shadow-inner">
-                            <span class="text-xl font-bold text-slate-400">%</span>
-                        </div>
-                        <p class="text-[11px] text-slate-400 text-center">0%에서 100% 사이로 자유롭게 설정 가능합니다.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white/[0.065] border border-white/10 rounded-3xl p-5 flex flex-col justify-between shadow-xl shadow-black/20 hover:bg-white/[0.085] transition">
-                    <div class="space-y-4">
-                        <h2 class="text-lg font-bold flex items-center gap-2 text-indigo-300">
-                            <i class="fa-solid fa-ticket"></i> 추첨 횟수 설정
+        <!-- MAIN CONTAINER -->
+        <main class="flex-grow flex flex-col justify-center">
+            
+            <!-- SECTION 1: CONFIGURATION PANEL (설정 화면) -->
+            <section id="config-section" class="glass-card rounded-2xl p-5 md:p-8 shadow-2xl transition-all duration-300">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 mb-6 gap-3">
+                    <div>
+                        <h2 class="text-2xl font-jua text-amber-300 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> 뽑기 옵션 및 확률 설정
                         </h2>
+                        <p class="text-xs md:text-sm text-slate-300">원하는 선택지와 확률을 자유롭게 입력하세요.</p>
+                    </div>
+                </div>
 
-                        <div class="space-y-2">
-                            <label class="block text-xs text-slate-400">총 뽑아낼 카드 갯수 (최대 40회)</label>
-                            <div class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
-                                <button onclick="adjustDrawCount(-1)" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
-                                    <i class="fa-solid fa-minus"></i>
-                                </button>
-                                <input type="number" id="draw-count" value="5" min="1" max="40" class="w-20 bg-transparent text-center text-2xl font-black focus:outline-none text-white">
-                                <button onclick="adjustDrawCount(1)" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:scale-90 transition rounded-lg text-lg font-bold flex items-center justify-center">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
+                <!-- Option Count Selector -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2 text-pink-200">
+                        1. 선택지 개수 설정 (1 ~ 5개)
+                    </label>
+                    <div class="grid grid-cols-5 gap-2 max-w-xs">
+                        <button type="button" onclick="setOptionCount(1)" id="btn-count-1" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">1개</button>
+                        <button type="button" onclick="setOptionCount(2)" id="btn-count-2" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">2개</button>
+                        <button type="button" onclick="setOptionCount(3)" id="btn-count-3" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">3개</button>
+                        <button type="button" onclick="setOptionCount(4)" id="btn-count-4" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">4개</button>
+                        <button type="button" onclick="setOptionCount(5)" id="btn-count-5" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">5개</button>
+                    </div>
+                </div>
+
+                <!-- Option Items Inputs -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2 text-pink-200">
+                        2. 선택지 항목 및 확률 설정 (합계가 정확히 100%여야 함)
+                    </label>
+
+                    <div id="options-container" class="space-y-3">
+                        <!-- Dynamic option rows will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Total Percentage Status Banner -->
+                <div id="status-banner" class="rounded-xl p-4 mb-6 flex items-center justify-between transition-all">
+                    <div class="flex items-center gap-3">
+                        <span id="status-icon" class="text-2xl">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        </span>
+                        <div>
+                            <div id="status-title" class="font-bold text-sm md:text-base">확률 계산 중...</div>
+                            <div id="status-desc" class="text-xs opacity-90">선택지 확률의 총합을 확인하는 중입니다.</div>
                         </div>
                     </div>
+                    <div class="text-right">
+                        <span class="text-xs block text-slate-300">총 확률</span>
+                        <span id="total-percent-display" class="font-jua text-2xl md:text-3xl">0%</span>
+                    </div>
+                </div>
 
-                    <button onclick="startDraw()" class="group w-full mt-6 py-4 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 hover:brightness-110 active:scale-[0.98] transition-all duration-200 rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-play group-hover:scale-110 transition-transform"></i>
-                        추첨 시작하기
+                <!-- Sound Option & Start Button -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+                        <input type="checkbox" id="sound-toggle" checked class="w-4 h-4 accent-pink-500 rounded">
+                        <span><i class="fa-solid fa-volume-high text-pink-400"></i> 사운드 효과 ON</span>
+                    </label>
+
+                    <button id="start-game-btn" onclick="goToGame()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-jua text-xl rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span>게임 시작하기</span>
+                        <i class="fa-solid fa-play"></i>
                     </button>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <div id="draw-screen" class="hidden space-y-6">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
-                <div class="space-y-1">
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        <h2 class="text-xl md:text-2xl font-extrabold text-indigo-300 flex items-center gap-2">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> 실시간 추첨 현황
-                        </h2>
-                        <span id="current-probability-badge" class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold tracking-wide">
-                            설정 확률: -
-                        </span>
+            <!-- SECTION 2: GAME STAGE (뽑기 진행 화면) -->
+            <section id="game-section" class="hidden glass-card rounded-2xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
+                
+                <!-- Navigation & Student Name Input -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-white/10">
+                    <button onclick="goToConfig()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 text-slate-300">
+                        <i class="fa-solid fa-gear"></i> 설정 수정
+                    </button>
+
+                    <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
+                        <i class="fa-solid fa-user text-pink-400 text-sm"></i>
+                        <input type="text" id="student-name-input" placeholder="참여자 이름/번호 (선택)" class="bg-transparent text-sm focus:outline-none w-36 text-pink-200 placeholder-slate-500">
                     </div>
-                    <p class="text-xs text-slate-400" id="draw-status-text">추첨 준비 중...</p>
                 </div>
-                <button id="btn-back" onclick="goBack()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed" disabled>
-                    <i class="fa-solid fa-rotate-left"></i> 다시 설정하기 (설정 유지)
-                </button>
-            </div>
 
-            <div class="relative w-full h-[65vh] bg-slate-950/90 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/5">
-                <canvas id="canvas" class="w-full h-full block"></canvas>
+                <!-- SLOT MACHINE STAGE -->
+                <div class="flex flex-col items-center justify-center my-4">
+                    
+                    <!-- Slot Display Box -->
+                    <div class="relative w-full max-w-md bg-slate-950 rounded-2xl p-6 border-4 border-pink-500/50 slot-window animate-pulse-glow text-center my-4">
+                        <div class="text-xs font-semibold text-pink-400 tracking-wider uppercase mb-2">
+                            <i class="fa-solid fa-dice text-amber-400"></i> 무엇이 나올까요?
+                        </div>
+                        
+                        <!-- Slot Reel Screen -->
+                        <div id="slot-reel-window" class="h-28 overflow-hidden relative flex items-center justify-center rounded-xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700">
+                            <div id="slot-reel-text" class="font-jua text-3xl md:text-4xl text-amber-300 transition-all transform">
+                                🎁 준비 완료!
+                            </div>
+                        </div>
+
+                        <!-- Pointer Indicator -->
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-amber-400 text-slate-950 px-3 py-0.5 rounded-full text-xs font-bold shadow">
+                            CHANCE
+                        </div>
+                    </div>
+
+                    <!-- Result Card Reveal Overlay (Shown after roll) -->
+                    <div id="result-modal" class="hidden my-2 p-4 bg-gradient-to-r from-purple-900/80 to-pink-900/80 border border-pink-400/50 rounded-2xl w-full max-w-md text-center transform animate-bounce-short">
+                        <div id="result-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 bg-amber-400 text-slate-900">
+                            결과 발표
+                        </div>
+                        <div id="result-title" class="font-jua text-4xl text-amber-200 mb-1">
+                            결과 나오는 중
+                        </div>
+                        <div id="result-desc" class="text-xs text-slate-200">
+                            축하합니다!
+                        </div>
+                    </div>
+
+                    <!-- Spin Controls -->
+                    <div class="mt-4 flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                        <button id="spin-btn" onclick="startSpin()" class="flex-1 py-4 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:opacity-90 font-jua text-2xl text-slate-950 rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate text-slate-950"></i>
+                            <span id="spin-btn-text">뽑기 돌리기!</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: HISTORY LOG (진행 기록판) -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-jua text-lg text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-pink-400"></i> 진행 및 뽑기 기록 (<span id="history-count">0</span>회)
+                        </h3>
+                        <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-rose-400 transition">
+                            <i class="fa-solid fa-trash-can"></i> 기록 초기화
+                        </button>
+                    </div>
+
+                    <!-- Quick Stats Badges -->
+                    <div id="stats-container" class="flex flex-wrap gap-2 mb-4">
+                        <!-- Stat badges dynamically generated -->
+                    </div>
+
+                    <!-- History Scroll Box -->
+                    <div class="max-h-40 overflow-y-auto bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-sm">
+                        <div id="history-list" class="space-y-2">
+                            <p class="text-xs text-slate-500 text-center py-2">아직 진행된 뽑기 기록이 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-slate-400 py-4 mt-4">
+            두근두근 만능 이벤트 뽑기 웹앱
+        </footer>
+    </div>
+
+    <!-- UI Alert Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-pink-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
+            <div id="modal-icon" class="text-4xl text-amber-400 mb-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
+            <h3 id="modal-title" class="font-jua text-2xl text-slate-100 mb-2">알림</h3>
+            <p id="modal-body" class="text-sm text-slate-300 mb-6">내용이 들어갑니다.</p>
+            <button onclick="closeModal()" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl transition">
+                확인
+            </button>
         </div>
     </div>
 
     <script>
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // APP STATE
+        let optionCount = 3;
+        let options = [
+            { id: 1, name: '선택지 A', percent: 20 },
+            { id: 2, name: '선택지 B', percent: 30 },
+            { id: 3, name: '선택지 C', percent: 50 }
+        ];
+        let historyLogs = [];
+        let isSpinning = false;
 
-        let probType = 'fraction';
-        let probability = 0.2;
-        let totalDraws = 5;
-        let results = [];
+        // AUDIO SYNTHESIZER (Web Audio API)
+        let audioCtx = null;
 
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let animationId;
-
-        let particles = [];
-        let cards = [];
-
-        let animState = 'COUNTDOWN';
-        let countdownTimer = 0;
-        const countdownDuration = 180;
-
-        let revealTimer = 0;
-        const revealInterval = 18;
-        let currentRevealIndex = -1;
-
-        function showAlert(msg) {
-            document.getElementById('alert-message').innerText = msg;
-            const modal = document.getElementById('custom-alert');
-            modal.classList.remove('hidden');
-        }
-        function closeAlert() {
-            document.getElementById('custom-alert').classList.add('hidden');
-        }
-
-        function setProbType(type) {
-            probType = type;
-            const btnFraction = document.getElementById('btn-fraction');
-            const btnPercent = document.getElementById('btn-percent');
-            const fractionArea = document.getElementById('fraction-area');
-            const percentArea = document.getElementById('percent-area');
-
-            if (type === 'fraction') {
-                btnFraction.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20";
-                btnPercent.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 text-slate-400 hover:text-white hover:bg-white/5";
-                fractionArea.classList.remove('hidden');
-                percentArea.classList.add('hidden');
-            } else {
-                btnFraction.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 text-slate-400 hover:text-white hover:bg-white/5";
-                btnPercent.className = "flex-1 py-2.5 rounded-xl text-sm font-bold transition active:scale-95 bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/20";
-                fractionArea.classList.add('hidden');
-                percentArea.classList.remove('hidden');
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-        }
-
-        document.getElementById('prob-num').addEventListener('input', updateFractionPreview);
-        document.getElementById('prob-den').addEventListener('input', updateFractionPreview);
-
-        function updateFractionPreview() {
-            const num = parseInt(document.getElementById('prob-num').value) || 0;
-            const den = parseInt(document.getElementById('prob-den').value) || 1;
-            const preview = document.getElementById('fraction-preview');
-            if (den <= 0) {
-                preview.innerText = "분모는 1 이상이어야 합니다.";
-                return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
-            const pct = Math.min(100, Math.max(0, (num / den) * 100)).toFixed(1);
-            preview.innerText = `현재 확률: ${pct}% (${den}번 중 ${num}번 당첨)`;
+            return audioCtx;
         }
 
-        function adjustDrawCount(val) {
-            const input = document.getElementById('draw-count');
-            let current = parseInt(input.value) || 1;
-            current += val;
-            if (current < 1) current = 1;
-            if (current > 40) current = 40;
-            input.value = current;
+        function playTickSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(350 + Math.random() * 100, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.05);
+
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.05);
+            } catch(e) {}
         }
 
-        function startDraw() {
-            totalDraws = parseInt(document.getElementById('draw-count').value);
-            if (isNaN(totalDraws) || totalDraws < 1 || totalDraws > 40) {
-                showAlert('추첨 횟수는 1회부터 40회까지만 입력 가능합니다.');
-                return;
-            }
+        function playWinFanfare() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    
+                    gain.gain.setValueAtTime(0, now + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.1 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.4);
 
-            let displayProbText = '';
-            if (probType === 'fraction') {
-                const num = parseInt(document.getElementById('prob-num').value);
-                const den = parseInt(document.getElementById('prob-den').value);
-                if (isNaN(num) || isNaN(den) || den <= 0 || num < 0) {
-                    showAlert('올바른 분수 형태를 지정해 주세요 (예: 1 / 5)');
-                    return;
-                }
-                if (num > den) {
-                    showAlert('분자가 분모보다 클 수 없습니다. (100% 초과 불가)');
-                    return;
-                }
-                probability = num / den;
-                const pct = (probability * 100).toFixed(1);
-                displayProbText = `설정 확률: ${num}/${den} (${pct}%)`;
-            } else {
-                const percent = parseFloat(document.getElementById('prob-percent').value);
-                if (isNaN(percent) || percent < 0 || percent > 100) {
-                    showAlert('퍼센트 값은 0%에서 100% 사이여야 합니다.');
-                    return;
-                }
-                probability = percent / 100;
-                displayProbText = `설정 확률: ${percent}%`;
-            }
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
 
-            document.getElementById('current-probability-badge').innerText = displayProbText;
-
-            results = [];
-            for (let i = 0; i < totalDraws; i++) {
-                results.push(Math.random() < probability ? 'WIN' : 'LOSE');
-            }
-
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('draw-screen').classList.remove('hidden');
-
-            const btnBack = document.getElementById('btn-back');
-            btnBack.disabled = true;
-            btnBack.className = "px-5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-white font-bold rounded-xl text-sm flex items-center gap-2 opacity-50 cursor-not-allowed";
-
-            initSimulator();
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.4);
+                });
+            } catch(e) {}
         }
 
-        function goBack() {
-            cancelAnimationFrame(animationId);
-            document.getElementById('draw-screen').classList.add('hidden');
-            document.getElementById('setup-screen').classList.remove('hidden');
-        }
+        window.onload = function() {
+            renderOptionInputs();
+            validatePercentages();
+        };
 
-        function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
+        function setOptionCount(count) {
+            optionCount = count;
             
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            
-            ctx.scale(dpr, dpr);
-        }
-
-        class Card {
-            constructor(index, result, x, y, w, h) {
-                this.index = index;
-                this.result = result;
-                this.targetX = x;
-                this.targetY = y;
-                this.x = x;
-                this.y = y + 100;
-                this.w = w;
-                this.h = h;
-
-                this.flipProgress = 0;
-                this.isFlipped = false;
-                this.opacity = 0;
-
-                this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
-            }
-
-            update() {
-                this.y += (this.targetY - this.y) * 0.12;
-                if (this.opacity < 1) this.opacity += 0.08;
-
-                if (animState === 'COUNTDOWN') {
-                    if (Math.random() < 0.15) {
-                        this.shuffleState = Math.random() < 0.5 ? 'WIN' : 'LOSE';
-                    }
-                }
-
-                if (this.isFlipped && this.flipProgress < 1) {
-                    this.flipProgress += 0.08;
-                    if (this.flipProgress > 1) {
-                        this.flipProgress = 1;
-                        if (this.result === 'WIN') {
-                            spawnParticles(this.x + this.w / 2, this.y + this.h / 2);
-                        }
-                    }
-                }
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = Math.min(1, Math.max(0, this.opacity));
-
-                const midX = this.x + this.w / 2;
-
-                if (animState === 'COUNTDOWN') {
-                    const isWin = this.shuffleState === 'WIN';
-                    const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
-
-                    if (isWin) {
-                        grad.addColorStop(0, '#1e1b4b');
-                        grad.addColorStop(1, '#311042');
-                        ctx.strokeStyle = 'rgba(234, 179, 8, 0.7)';
-                    } else {
-                        grad.addColorStop(0, '#0f172a');
-                        grad.addColorStop(1, '#1e293b');
-                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-                    }
-
-                    ctx.fillStyle = grad;
-                    ctx.lineWidth = 2;
-                    drawRoundRect(this.x, this.y, this.w, this.h, 12);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // 흔들리며 무작위로 교차하는 글자 출력 (카드 너비에 비례)
-                    const shuffleFontSize = Math.max(14, Math.floor(this.w * 0.22));
-                    ctx.fillStyle = isWin ? '#facc15' : '#6366f1';
-                    ctx.font = `800 ${shuffleFontSize}px Pretendard`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(isWin ? '당첨' : '꽝', midX, this.y + this.h / 2);
-
-                    ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
-                    const scanY = (Date.now() / 6) % this.h;
-                    ctx.fillRect(this.x, this.y + scanY, this.w, 3);
-
-                } else {
-                    const scaleX = Math.abs(Math.sin((this.flipProgress + 0.5) * Math.PI));
-
-                    ctx.translate(midX, this.y + this.h / 2);
-                    ctx.scale(scaleX, 1.0);
-                    ctx.translate(-midX, -(this.y + this.h / 2));
-
-                    const showFront = this.flipProgress >= 0.5;
-
-                    if (!showFront) {
-                        const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
-                        grad.addColorStop(0, '#312e81');
-                        grad.addColorStop(1, '#1e1b4b');
-                        ctx.fillStyle = grad;
-                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
-                        ctx.lineWidth = 2;
-
-                        drawRoundRect(this.x, this.y, this.w, this.h, 12);
-                        ctx.fill();
-                        ctx.stroke();
-
-                        const backMainFontSize = Math.max(14, Math.floor(this.w * 0.22));
-                        const backSubFontSize = Math.max(10, Math.floor(this.w * 0.13));
-
-                        ctx.fillStyle = '#a5b4fc';
-                        ctx.font = `800 ${backMainFontSize}px Pretendard`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(`${this.index + 1}`, midX, this.y + this.h / 2 - (this.h * 0.08));
-
-                        ctx.fillStyle = '#6366f1';
-                        ctx.font = `600 ${backSubFontSize}px Pretendard`;
-                        ctx.fillText('추첨중', midX, this.y + this.h / 2 + (this.h * 0.18));
-
-                    } else {
-                        const isWin = this.result === 'WIN';
-                        const grad = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
-
-                        if (isWin) {
-                            grad.addColorStop(0, '#fef08a');
-                            grad.addColorStop(1, '#eab308');
-                            ctx.strokeStyle = '#facc15';
-                        } else {
-                            grad.addColorStop(0, '#475569');
-                            grad.addColorStop(1, '#334155');
-                            ctx.strokeStyle = '#64748b';
-                        }
-
-                        ctx.fillStyle = grad;
-                        ctx.lineWidth = 3;
-                        drawRoundRect(this.x, this.y, this.w, this.h, 12);
-                        ctx.fill();
-                        ctx.stroke();
-
-                        const emojiSize = Math.max(20, Math.floor(this.w * 0.35));
-                        const frontMainFontSize = Math.max(14, Math.floor(this.w * 0.22));
-                        const frontSubFontSize = Math.max(10, Math.floor(this.w * 0.13));
-
-                        ctx.fillStyle = isWin ? '#713f12' : '#f8fafc';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-
-                        ctx.font = `${emojiSize}px Pretendard`;
-                        ctx.fillText(isWin ? '🎉' : '💀', midX, this.y + this.h / 2 - (this.h * 0.15));
-
-                        ctx.font = `800 ${frontMainFontSize}px Pretendard`;
-                        ctx.fillText(isWin ? '당첨 !' : '꽝', midX, this.y + this.h / 2 + (this.h * 0.12));
-
-                        ctx.fillStyle = isWin ? '#a16207' : '#94a3b8';
-                        ctx.font = `bold ${frontSubFontSize}px Pretendard`;
-                        ctx.fillText(`${this.index + 1}회차`, midX, this.y + this.h / 2 + (this.h * 0.30));
-                    }
-                }
-
-                ctx.restore();
-            }
-        }
-
-        class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.size = Math.random() * 6 + 4;
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 8 + 4;
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed - 3;
-                this.gravity = 0.25;
-                this.opacity = 1;
-                this.color = `hsl(${Math.random() * 40 + 35}, 100%, 60%)`;
-                this.rotation = Math.random() * Math.PI;
-                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
-            }
-
-            update() {
-                this.vy += this.gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-                this.rotation += this.rotationSpeed;
-                this.opacity -= 0.02;
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.opacity);
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation);
-                ctx.fillStyle = this.color;
-                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-                ctx.restore();
-            }
-        }
-
-        function drawRoundRect(x, y, width, height, radius) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-        }
-
-        function spawnParticles(x, y) {
-            for (let i = 0; i < 25; i++) {
-                particles.push(new Particle(x, y));
-            }
-        }
-
-        function initSimulator() {
-            resizeCanvas();
-
-            particles = [];
-            cards = [];
-            countdownTimer = 0;
-            revealTimer = 0;
-            currentRevealIndex = -1;
-            animState = 'COUNTDOWN';
-
-            calculateGrid();
-
-            if (animationId) cancelAnimationFrame(animationId);
-            animate();
-        }
-
-        let virtualWidth = 800;
-        let virtualHeight = 600;
-
-        function calculateGrid() {
-            const rect = canvas.getBoundingClientRect();
-            virtualWidth = rect.width;
-            virtualHeight = rect.height;
-
-            const count = totalDraws;
-            const startY = virtualHeight * 0.38;
-            const endY = virtualHeight * 0.95;
-            const areaWidth = virtualWidth * 0.95;
-            const gap = Math.max(8, virtualWidth * 0.015);
-
-            let cols = 1;
-            let rows = 1;
-            let bestCardW = 0;
-            let bestCardH = 0;
-
-            for (let r = 1; r <= 4; r++) {
-                let c = Math.ceil(count / r);
-                if (c > 12) continue;
-
-                const availableW = areaWidth - (c - 1) * gap;
-                const availableH = (endY - startY) - (r - 1) * gap;
-
-                let tempW = availableW / c;
-                let tempH = availableH / r;
-
-                const ratio = 16 / 9;
-                if (tempW * ratio > tempH) {
-                    tempW = tempH / ratio;
-                } else {
-                    tempH = tempW * ratio;
-                }
-
-                const maxW = Math.min(120, virtualWidth * 0.12);
-                if (tempW > maxW) {
-                    tempW = maxW;
-                    tempH = maxW * ratio;
-                }
-
-                if (tempW > bestCardW) {
-                    bestCardW = tempW;
-                    bestCardH = tempH;
-                    cols = c;
-                    rows = r;
-                }
-            }
-
-            const totalGridW = cols * bestCardW + (cols - 1) * gap;
-            const totalGridH = rows * bestCardH + (rows - 1) * gap;
-            
-            const startX = (virtualWidth - totalGridW) / 2;
-            const originY = startY + ((endY - startY) - totalGridH) / 2;
-
-            for (let i = 0; i < count; i++) {
-                const rIndex = Math.floor(i / cols);
-                const cIndex = i % cols;
-                const cx = startX + cIndex * (bestCardW + gap);
-                const cy = originY + rIndex * (bestCardH + gap);
-                cards.push(new Card(i, results[i], cx, cy, bestCardW, bestCardH));
-            }
-        }
-
-        function animate() {
-            const bg = ctx.createLinearGradient(0, 0, virtualWidth, virtualHeight);
-            bg.addColorStop(0, '#111827');
-            bg.addColorStop(0.45, '#090916');
-            bg.addColorStop(1, '#020617');
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, virtualWidth, virtualHeight);
-
-            ctx.save();
-            ctx.globalAlpha = 0.12;
-            ctx.strokeStyle = '#6366f1';
-
-            for (let x = 0; x < virtualWidth; x += 40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, virtualHeight);
-                ctx.stroke();
-            }
-
-            for (let y = 0; y < virtualHeight; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(virtualWidth, y);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-
-            if (animState === 'COUNTDOWN') {
-                countdownTimer++;
-
-                let secondsLeft = 3 - Math.floor(countdownTimer / 60);
-                if (secondsLeft < 1) secondsLeft = 1;
-
-                document.getElementById('draw-status-text').innerText = `추첨 개시까지 ${secondsLeft}초...`;
-
-                drawCountdownHUD(secondsLeft);
-
-                if (countdownTimer >= countdownDuration) {
-                    animState = 'REVEALING';
-                    currentRevealIndex = 0;
-                    revealTimer = 0;
-                    document.getElementById('draw-status-text').innerText = '카운트다운 종료! 순차 개봉을 시작합니다.';
-                }
-            }
-
-            cards.forEach(card => {
-                card.update();
-                card.draw();
-            });
-
-            particles.forEach((p, idx) => {
-                p.update();
-                p.draw();
-                if (p.opacity <= 0) particles.splice(idx, 1);
-            });
-
-            if (animState === 'REVEALING') {
-                revealTimer++;
-                if (currentRevealIndex < cards.length) {
-                    const currentCard = cards[currentRevealIndex];
-                    if (!currentCard.isFlipped) {
-                        currentCard.isFlipped = true;
-                    }
-
-                    if (revealTimer >= revealInterval) {
-                        revealTimer = 0;
-                        currentRevealIndex++;
-                    }
-                } else {
-                    animState = 'FINISHED';
-                    endDrawSequence();
-                }
-            }
-
-            animationId = requestAnimationFrame(animate);
-        }
-
-        function drawCountdownHUD(secondsLeft) {
-            const progress = countdownTimer / countdownDuration;
-            const currentAngle = progress * Math.PI * 2 - Math.PI / 2;
-
-            ctx.save();
-            ctx.translate(virtualWidth / 2, virtualHeight * 0.18);
-
-            ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.arc(0, 0, 55, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.save();
-            ctx.rotate(countdownTimer * 0.02);
-            ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-            ctx.lineWidth = 6;
-            ctx.setLineDash([4, 8]);
-            ctx.beginPath();
-            ctx.arc(0, 0, 65, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-
-            ctx.shadowColor = '#38bdf8';
-            ctx.shadowBlur = 16;
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(0, 0, 55, -Math.PI / 2, currentAngle, false);
-            ctx.stroke();
-
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#0f172a';
-            ctx.beginPath();
-            ctx.arc(0, 0, 48, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 52px Pretendard';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(secondsLeft, 0, -2);
-
-            ctx.restore();
-        }
-
-        function endDrawSequence() {
-            let wins = 0;
-            results.forEach(r => { if (r === 'WIN') wins++; });
-
-            document.getElementById('draw-status-text').innerHTML =
-                `추첨 완료 - 전체 ${totalDraws}회 중 <span class="text-yellow-300 font-black">당첨 ${wins}회</span>, <span class="text-slate-300 font-black">꽝 ${totalDraws - wins}회</span>`;
-
-            const btnBack = document.getElementById('btn-back');
-            btnBack.disabled = false;
-            btnBack.className = "px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 cursor-pointer transition-all duration-150";
-        }
-
-        // 브라우저 리사이즈 시 실시간 그리드 재정렬 이벤트 위임
-        window.addEventListener('resize', () => {
-            if (document.getElementById('draw-screen').classList.contains('hidden') === false) {
-                resizeCanvas();
-                const savedCardsStatus = cards.map(c => ({ isFlipped: c.isFlipped, flipProgress: c.flipProgress }));
-                cards = [];
-                calculateGrid();
-                cards.forEach((c, idx) => {
-                    if (savedCardsStatus[idx]) {
-                        c.isFlipped = savedCardsStatus[idx].isFlipped;
-                        c.flipProgress = savedCardsStatus[idx].flipProgress;
-                        c.y = c.targetY;
-                        c.opacity = 1;
-                    }
+            while (options.length < count) {
+                const newId = options.length + 1;
+                options.push({
+                    id: newId,
+                    name: `선택지 ${String.fromCharCode(64 + newId)}`,
+                    percent: 0
                 });
             }
-        });
+            if (options.length > count) {
+                options = options.slice(0, count);
+            }
+
+            renderOptionInputs();
+            validatePercentages();
+        }
+
+        function renderOptionInputs() {
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`btn-count-${i}`);
+                if (i === optionCount) {
+                    btn.className = "count-btn py-2 rounded-xl bg-pink-600 border border-pink-400 font-bold text-white shadow transition";
+                } else {
+                    btn.className = "count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold text-slate-300 hover:border-pink-500 transition";
+                }
+            }
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            options.forEach((opt, idx) => {
+                const row = document.createElement('div');
+                row.className = "flex flex-col sm:flex-row items-center gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800";
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 font-bold text-xs flex items-center justify-center border border-slate-700">${idx + 1}</span>
+                    </div>
+
+                    <input type="text" value="${opt.name}" oninput="updateOptionName(${idx}, this.value)" placeholder="항목 이름을 입력하세요" 
+                        class="flex-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-pink-500 focus:outline-none">
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <label class="text-xs text-slate-400">확률(%):</label>
+                        <input type="number" min="0" max="100" value="${opt.percent}" oninput="updateOptionPercent(${idx}, this.value)" 
+                            class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center font-bold text-amber-300 focus:border-pink-500 focus:outline-none">
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateOptionName(idx, val) {
+            options[idx].name = val;
+        }
+
+        function updateOptionPercent(idx, val) {
+            options[idx].percent = parseFloat(val) || 0;
+            validatePercentages();
+        }
+
+        function validatePercentages() {
+            const total = options.reduce((sum, item) => sum + (parseFloat(item.percent) || 0), 0);
+            const formattedTotal = Math.round(total * 10) / 10;
+
+            const banner = document.getElementById('status-banner');
+            const icon = document.getElementById('status-icon');
+            const title = document.getElementById('status-title');
+            const desc = document.getElementById('status-desc');
+            const display = document.getElementById('total-percent-display');
+            const startBtn = document.getElementById('start-game-btn');
+
+            display.innerText = `${formattedTotal}%`;
+
+            if (Math.abs(formattedTotal - 100) < 0.1) {
+                banner.className = "rounded-xl p-4 mb-6 flex items-center justify-between bg-emerald-950/60 border border-emerald-500/50 text-emerald-200 transition-all";
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                title.innerText = "설정 완료! 준비 되었습니다.";
+                desc.innerText = "모든 확률의 합이 정확히 100%입니다. 게임을 시작하세요!";
+                startBtn.disabled = false;
+            } else {
+                banner.className = "rounded-xl p-4 mb-6 flex items-center justify-between bg-rose-950/60 border border-rose-500/50 text-rose-200 transition-all";
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
+                title.innerText = "확률 수정 필요!";
+                desc.innerText = formattedTotal > 100 
+                    ? `확률의 합이 100%를 초과했습니다 (${(formattedTotal - 100).toFixed(1)}% 초과). 값을 낮춰주세요.`
+                    : `확률의 합이 100%에 부족합니다 (${(100 - formattedTotal).toFixed(1)}% 부족). 값을 올려주세요.`;
+                startBtn.disabled = true;
+            }
+        }
+
+        function goToGame() {
+            document.getElementById('config-section').classList.add('hidden');
+            document.getElementById('game-section').classList.remove('hidden');
+            resetSlotDisplay();
+            updateHistoryUI();
+        }
+
+        function goToConfig() {
+            document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('config-section').classList.remove('hidden');
+        }
+
+        function resetSlotDisplay() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('slot-reel-text').innerText = "🎁 준비 완료!";
+            document.getElementById('slot-reel-text').className = "font-jua text-3xl md:text-4xl text-amber-300 transition-all transform";
+        }
+
+        function getRandomOption() {
+            const rand = Math.random() * 100;
+            let cumulative = 0;
+            for (let i = 0; i < options.length; i++) {
+                cumulative += options[i].percent;
+                if (rand <= cumulative) {
+                    return options[i];
+                }
+            }
+            return options[options.length - 1];
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+            getAudioContext();
+            
+            isSpinning = true;
+            const spinBtn = document.getElementById('spin-btn');
+            const reelText = document.getElementById('slot-reel-text');
+            const resultModal = document.getElementById('result-modal');
+
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-50');
+            resultModal.classList.add('hidden');
+
+            const selectedResult = getRandomOption();
+            const dummyItems = options.map(o => o.name);
+
+            let currentStep = 0;
+            let totalSteps = 30 + Math.floor(Math.random() * 10);
+            let speed = 50;
+
+            function step() {
+                currentStep++;
+                
+                const randomItem = dummyItems[Math.floor(Math.random() * dummyItems.length)];
+                reelText.innerText = randomItem;
+                reelText.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
+                
+                playTickSound();
+
+                if (currentStep < totalSteps) {
+                    if (currentStep > totalSteps - 15) {
+                        speed += 25;
+                    } else if (currentStep > totalSteps - 8) {
+                        speed += 50;
+                    }
+                    setTimeout(step, speed);
+                } else {
+                    setTimeout(() => {
+                        finishSpin(selectedResult);
+                    }, speed + 100);
+                }
+            }
+
+            step();
+        }
+
+        function finishSpin(result) {
+            isSpinning = false;
+            const spinBtn = document.getElementById('spin-btn');
+            const reelText = document.getElementById('slot-reel-text');
+            const resultModal = document.getElementById('result-modal');
+            const resultTitle = document.getElementById('result-title');
+            const resultDesc = document.getElementById('result-desc');
+            const resultBadge = document.getElementById('result-badge');
+
+            spinBtn.disabled = false;
+            spinBtn.classList.remove('opacity-50');
+
+            reelText.innerText = result.name;
+            reelText.style.transform = "scale(1.1)";
+            reelText.className = "font-jua text-3xl md:text-5xl text-amber-300 font-bold drop-shadow-lg";
+
+            resultBadge.innerText = "🎉 당첨 결과";
+            resultTitle.innerText = result.name;
+            resultDesc.innerText = `[${result.name}] 항목이 선택되었습니다!`;
+            resultModal.classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+            playWinFanfare();
+
+            const studentInput = document.getElementById('student-name-input');
+            const studentName = studentInput.value.trim() || `${historyLogs.length + 1}번 참여자`;
+
+            historyLogs.unshift({
+                time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                student: studentName,
+                item: result.name
+            });
+
+            studentInput.value = '';
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            document.getElementById('history-count').innerText = historyLogs.length;
+            const listContainer = document.getElementById('history-list');
+            const statsContainer = document.getElementById('stats-container');
+
+            if (historyLogs.length === 0) {
+                listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">아직 진행된 뽑기 기록이 없습니다.</p>';
+                statsContainer.innerHTML = '';
+                return;
+            }
+
+            const counts = {};
+            historyLogs.forEach(log => {
+                counts[log.item] = (counts[log.item] || 0) + 1;
+            });
+
+            statsContainer.innerHTML = Object.entries(counts).map(([itemName, count]) => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-xs font-semibold text-pink-300">
+                    <span>${itemName}:</span>
+                    <span class="text-amber-300 font-bold">${count}회</span>
+                </span>
+            `).join('');
+
+            listContainer.innerHTML = historyLogs.map(log => `
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800/80 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-500 text-[10px]">${log.time}</span>
+                        <span class="font-bold text-slate-200">${log.student}</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        ${log.item}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (historyLogs.length === 0) return;
+            historyLogs = [];
+            updateHistoryUI();
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
     </script>
 </body>
-
 </html>
