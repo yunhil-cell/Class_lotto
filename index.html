@@ -10,48 +10,67 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
+        /* 넥슨 던파 비트비트체 V2 웹폰트 정의 */
+        @font-face {
+            font-family: 'DnfBitbeatV2';
+            src: url('https://cdn.df.nexon.com/img/common/font/DNFBitBitv2.otf') format('opentype');
+            font-weight: 400;
+            font-display: swap;
+        }
+
+        * {
+            font-family: 'DnfBitbeatV2', sans-serif !important;
+            letter-spacing: 0.5px;
+        }
+
         body {
-            font-family: 'Noto Sans KR', sans-serif;
             background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.22), transparent 35%),
                         radial-gradient(circle at 80% 80%, rgba(244, 63, 94, 0.2), transparent 35%),
                         linear-gradient(135deg, #070913 0%, #0f172a 50%, #1e102d 100%);
             min-height: 100vh;
         }
-        .font-jua {
-            font-family: 'Jua', sans-serif;
-        }
+
         .glass-panel {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        /* Slot Reel Box Styles */
+
+        /* Slot Reel Box Styles (정사각형 및 큼직한 비율) */
         .slot-cell {
             background: linear-gradient(180deg, #090d16 0%, #171f38 50%, #090d16 100%);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 6px 16px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.12);
             transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            aspect-ratio: 1 / 1; /* 정사각형 비율 강제 */
         }
         .slot-cell.spinning {
-            border-color: rgba(244, 63, 94, 0.6);
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(244, 63, 94, 0.4);
+            border-color: rgba(244, 63, 94, 0.9);
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9), 0 0 25px rgba(244, 63, 94, 0.6);
+            transform: scale(1.02);
         }
         .slot-cell.stopped-win {
-            border-color: rgba(250, 204, 21, 0.9);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 20px rgba(250, 204, 21, 0.4);
-            background: linear-gradient(180deg, #1e1b4b 0%, #2e1065 50%, #090d16 100%);
+            border-color: rgba(250, 204, 21, 1);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.6);
+            background: linear-gradient(180deg, #2e1065 0%, #4c1d95 50%, #090d16 100%);
+            animation: win-bounce 0.4s ease-out;
         }
         .slot-cell.stopped-lose {
-            border-color: rgba(100, 116, 139, 0.6);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            border-color: rgba(100, 116, 139, 0.7);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
-            opacity: 0.75;
+            opacity: 0.7;
         }
+
+        @keyframes win-bounce {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
@@ -62,12 +81,12 @@
     <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-between">
         
         <!-- HEADER -->
-        <header class="text-center py-2 mb-3">
+        <header class="text-center py-2 mb-2">
             <div class="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-500/20 px-3.5 py-1 rounded-full mb-1">
                 <i class="fa-solid fa-clover text-pink-400 text-xs"></i>
-                <span class="text-xs font-semibold text-pink-200">교실 만능 다중 슬롯머신</span>
+                <span class="text-xs text-pink-200">교실 만능 다중 슬롯머신</span>
             </div>
-            <h1 class="text-3xl md:text-5xl font-jua tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 drop-shadow">
+            <h1 class="text-3xl md:text-5xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 drop-shadow">
                 🎰 두근두근 멀티 슬롯 추첨기
             </h1>
         </header>
@@ -83,44 +102,44 @@
                     
                     <!-- 1. 확률 입력 방식 -->
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <label class="text-xs text-slate-300 flex items-center gap-1.5">
                             <i class="fa-solid fa-calculator text-indigo-400"></i> 확률 방식 선택
                         </label>
                         <div class="grid grid-cols-2 gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/5">
-                            <button type="button" onclick="setProbMode('percent')" id="btn-mode-percent" class="py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-600 to-rose-600 text-white transition">
+                            <button type="button" onclick="setProbMode('percent')" id="btn-mode-percent" class="py-2.5 rounded-xl text-xs md:text-sm bg-gradient-to-r from-pink-600 to-rose-600 text-white transition shadow">
                                 퍼센트(%)
                             </button>
-                            <button type="button" onclick="setProbMode('fraction')" id="btn-mode-fraction" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
-                                분수/비율(가중치)
+                            <button type="button" onclick="setProbMode('fraction')" id="btn-mode-fraction" class="py-2.5 rounded-xl text-xs md:text-sm text-slate-400 hover:text-white transition">
+                                분수/비율
                             </button>
                         </div>
                     </div>
 
                     <!-- 2. 항목 개수 (2~6개) -->
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <label class="text-xs text-slate-300 flex items-center gap-1.5">
                             <i class="fa-solid fa-list-ol text-pink-400"></i> 선택지 개수
                         </label>
                         <div class="grid grid-cols-5 gap-1 bg-black/40 p-1.5 rounded-2xl border border-white/5">
-                            <button type="button" onclick="setOptionCount(2)" id="btn-cnt-2" class="py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow">2개</button>
-                            <button type="button" onclick="setOptionCount(3)" id="btn-cnt-3" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">3개</button>
-                            <button type="button" onclick="setOptionCount(4)" id="btn-cnt-4" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">4개</button>
-                            <button type="button" onclick="setOptionCount(5)" id="btn-cnt-5" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">5개</button>
-                            <button type="button" onclick="setOptionCount(6)" id="btn-cnt-6" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">6개</button>
+                            <button type="button" onclick="setOptionCount(2)" id="btn-cnt-2" class="py-2.5 rounded-xl text-xs bg-indigo-600 text-white transition shadow">2개</button>
+                            <button type="button" onclick="setOptionCount(3)" id="btn-cnt-3" class="py-2.5 rounded-xl text-xs text-slate-400 hover:text-white transition">3개</button>
+                            <button type="button" onclick="setOptionCount(4)" id="btn-cnt-4" class="py-2.5 rounded-xl text-xs text-slate-400 hover:text-white transition">4개</button>
+                            <button type="button" onclick="setOptionCount(5)" id="btn-cnt-5" class="py-2.5 rounded-xl text-xs text-slate-400 hover:text-white transition">5개</button>
+                            <button type="button" onclick="setOptionCount(6)" id="btn-cnt-6" class="py-2.5 rounded-xl text-xs text-slate-400 hover:text-white transition">6개</button>
                         </div>
                     </div>
 
                     <!-- 3. 슬롯(추첨) 개수 (1~40개) -->
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-ticket text-amber-400"></i> 추첨할 슬롯 개수 (1~40개)
+                        <label class="text-xs text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-ticket text-amber-400"></i> 슬롯 개수 (1~40개)
                         </label>
                         <div class="flex items-center justify-between bg-black/40 p-1.5 rounded-2xl border border-white/5">
-                            <button type="button" onclick="adjustDrawCount(-5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">-5</button>
-                            <button type="button" onclick="adjustDrawCount(-1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">-1</button>
-                            <input type="number" id="draw-count-input" value="5" min="1" max="40" class="w-14 bg-transparent text-center text-lg font-black text-amber-300 focus:outline-none">
-                            <button type="button" onclick="adjustDrawCount(1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">+1</button>
-                            <button type="button" onclick="adjustDrawCount(5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">+5</button>
+                            <button type="button" onclick="adjustDrawCount(-5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs">-5</button>
+                            <button type="button" onclick="adjustDrawCount(-1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs">-1</button>
+                            <input type="number" id="draw-count-input" value="5" min="1" max="40" class="w-14 bg-transparent text-center text-lg text-amber-300 focus:outline-none">
+                            <button type="button" onclick="adjustDrawCount(1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs">+1</button>
+                            <button type="button" onclick="adjustDrawCount(5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs">+5</button>
                         </div>
                     </div>
                 </div>
@@ -128,8 +147,8 @@
                 <!-- 옵션 목록 입력 영역 -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <label class="text-xs font-bold text-pink-200">
-                            선택지 항목 및 확률값 설정
+                        <label class="text-xs text-pink-200">
+                            선택지 항목 및 확률 설정
                         </label>
                         <span id="prob-hint-text" class="text-[11px] text-slate-400">퍼센트 합계가 정확히 100%여야 합니다.</span>
                     </div>
@@ -146,13 +165,13 @@
                             <i class="fa-solid fa-circle-notch fa-spin"></i>
                         </span>
                         <div>
-                            <div id="status-title" class="font-bold text-xs md:text-sm">확률 계산 중...</div>
+                            <div id="status-title" class="text-xs md:text-sm">확률 계산 중...</div>
                             <div id="status-desc" class="text-[11px] opacity-80">선택지 확률의 총합을 확인하는 중입니다.</div>
                         </div>
                     </div>
                     <div class="text-right">
                         <span class="text-[10px] block text-slate-400" id="status-total-label">총 확률</span>
-                        <span id="status-total-display" class="font-jua text-xl md:text-2xl">0%</span>
+                        <span id="status-total-display" class="text-xl md:text-2xl">0%</span>
                     </div>
                 </div>
 
@@ -163,7 +182,7 @@
                         <span><i class="fa-solid fa-volume-high text-pink-400"></i> 사운드 효과 ON</span>
                     </label>
 
-                    <button id="btn-to-stage" onclick="goToSlotStage()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-indigo-600 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white font-jua text-xl rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                    <button id="btn-to-stage" onclick="goToSlotStage()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-indigo-600 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
                         <span>슬롯머신 입장하기</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
@@ -171,7 +190,7 @@
             </section>
 
             <!-- 2. MULTI SLOT STAGE VIEW (슬롯머신 추첨 진행 화면) -->
-            <section id="slot-stage-section" class="hidden glass-panel rounded-3xl p-5 md:p-7 shadow-2xl space-y-5">
+            <section id="slot-stage-section" class="hidden glass-panel rounded-3xl p-5 md:p-7 shadow-2xl space-y-4">
                 
                 <!-- 슬롯 상단 바 -->
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -181,26 +200,26 @@
 
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-slate-400">총 슬롯 수:</span>
-                        <span id="display-slot-count-badge" class="px-3 py-1 bg-pink-500/20 border border-pink-500/40 text-pink-300 rounded-lg text-xs font-bold">5개</span>
+                        <span id="display-slot-count-badge" class="px-3 py-1 bg-pink-500/20 border border-pink-500/40 text-pink-300 rounded-lg text-xs">5개</span>
                     </div>
 
-                    <button id="btn-spin-all" onclick="startMultiSlotSpin()" class="px-6 py-2.5 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:brightness-110 font-jua text-lg text-slate-950 rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                    <button id="btn-spin-all" onclick="startMultiSlotSpin()" class="px-6 py-2.5 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:brightness-110 text-lg text-slate-950 rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-rotate text-slate-950"></i>
                         <span id="spin-btn-text">전체 슬롯 돌리기!</span>
                     </button>
                 </div>
 
-                <!-- SLOTS GRID BOARD (한 줄 최대 5개, 가로폭 고정 및 완벽한 중앙 정렬) -->
-                <div class="p-2 md:p-5 bg-slate-950/80 rounded-3xl border border-white/5 min-h-[280px] max-h-[58vh] overflow-y-auto flex items-center justify-center">
-                    <div id="slots-grid" class="w-full flex flex-wrap justify-center content-center gap-3 md:gap-3.5 max-w-[1050px] mx-auto p-1">
+                <!-- SLOTS GRID BOARD (정사각형 비율 유지 및 공간 꽉 채움) -->
+                <div class="p-3 md:p-6 bg-slate-950/80 rounded-3xl border border-white/5 min-h-[360px] max-h-[62vh] overflow-y-auto flex items-center justify-center">
+                    <div id="slots-grid" class="w-full flex flex-wrap justify-center content-center gap-3.5 md:gap-5 max-w-[1100px] mx-auto p-1">
                         <!-- 동적으로 슬롯 셀이 주입됨 -->
                     </div>
                 </div>
 
                 <!-- STATS & HISTORY PANEL -->
-                <div class="pt-3 border-t border-white/10 space-y-3">
+                <div class="pt-2 border-t border-white/10 space-y-2.5">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-jua text-base text-slate-200 flex items-center gap-2">
+                        <h3 class="text-base text-slate-200 flex items-center gap-2">
                             <i class="fa-solid fa-chart-simple text-pink-400"></i> 실시간 누적 추첨 결과 (<span id="total-roll-count">0</span>회 누적)
                         </h3>
                         <button onclick="clearHistoryLogs()" class="text-[11px] text-slate-400 hover:text-rose-400 transition flex items-center gap-1">
@@ -217,14 +236,14 @@
         </main>
 
         <!-- FOOTER -->
-        <footer class="text-center text-[11px] text-slate-500 py-3">
-            두근두근 교실 멀티 슬롯머신 &bull; 5열 반응형 센터 그리드 & 사운드 엔진
+        <footer class="text-center text-[11px] text-slate-500 py-2">
+            두근두근 교실 멀티 슬롯머신 &bull; DnfBitbeatV2 Game Font & Real RNG Engine
         </footer>
     </div>
 
     <script>
         /* ----------------------------------------------------
-           1. 상태 변수 및 기본값 (기본: 당첨 / 꽝 2개)
+           1. 상태 변수 및 기본값
         ---------------------------------------------------- */
         let probMode = 'percent'; // 'percent' or 'fraction'
         let optionCount = 2;       // 기본 2개 항목으로 시작
@@ -239,7 +258,7 @@
         let historyLogs = [];
 
         /* ----------------------------------------------------
-           2. Web Audio API 사운드 엔진 (팡파레 & 실망 사운드)
+           2. Web Audio API 사운드 엔진
         ---------------------------------------------------- */
         let audioCtx = null;
         function getAudioContext() {
@@ -288,13 +307,12 @@
             } catch(e) {}
         }
 
-        // 🎺 신나는 축하 팡파레 (당첨자가 1명이라도 있을 때)
         function playFanfare() {
             if (!document.getElementById('sound-toggle').checked) return;
             try {
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((freq, idx) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -311,7 +329,6 @@
             } catch(e) {}
         }
 
-        // 💀 실망스러운 '띠로리로리~' 사운드 (전원 꽝일 때)
         function playFailSound() {
             if (!document.getElementById('sound-toggle').checked) return;
             try {
@@ -360,19 +377,17 @@
             const hint = document.getElementById('prob-hint-text');
 
             if (mode === 'percent') {
-                btnPct.className = "py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-600 to-rose-600 text-white transition shadow";
-                btnFrac.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                btnPct.className = "py-2.5 rounded-xl text-xs md:text-sm bg-gradient-to-r from-pink-600 to-rose-600 text-white transition shadow";
+                btnFrac.className = "py-2.5 rounded-xl text-xs md:text-sm text-slate-400 hover:text-white transition";
                 hint.innerText = "퍼센트 합계가 정확히 100%여야 합니다.";
-                // 기본값 전환
                 if (options.length === 2 && options[0].val === 1 && options[1].val === 4) {
                     options[0].val = 20;
                     options[1].val = 80;
                 }
             } else {
-                btnFrac.className = "py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-sky-600 text-white transition shadow";
-                btnPct.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                btnFrac.className = "py-2.5 rounded-xl text-xs md:text-sm bg-gradient-to-r from-indigo-600 to-sky-600 text-white transition shadow";
+                btnPct.className = "py-2.5 rounded-xl text-xs md:text-sm text-slate-400 hover:text-white transition";
                 hint.innerText = "가중치(비율)를 정수로 자유롭게 입력하세요. (예: 1 : 4)";
-                // 기본값 전환
                 if (options.length === 2 && options[0].val === 20 && options[1].val === 80) {
                     options[0].val = 1;
                     options[1].val = 4;
@@ -387,9 +402,9 @@
             for (let i = 2; i <= 6; i++) {
                 const btn = document.getElementById(`btn-cnt-${i}`);
                 if (i === count) {
-                    btn.className = "py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow";
+                    btn.className = "py-2.5 rounded-xl text-xs bg-indigo-600 text-white transition shadow";
                 } else {
-                    btn.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                    btn.className = "py-2.5 rounded-xl text-xs text-slate-400 hover:text-white transition";
                 }
             }
 
@@ -432,13 +447,13 @@
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-2 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800";
                 row.innerHTML = `
-                    <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 font-bold text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">${idx + 1}</span>
+                    <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">${idx + 1}</span>
                     <input type="text" value="${opt.name}" oninput="updateOptName(${idx}, this.value)" placeholder="항목 이름" 
                         class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs md:text-sm text-slate-100 focus:border-pink-500 focus:outline-none">
                     <div class="flex items-center gap-1.5 flex-shrink-0">
                         <input type="number" min="0" step="any" value="${opt.val}" oninput="updateOptVal(${idx}, this.value)"
-                            class="w-16 bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-xs md:text-sm text-center font-bold text-amber-300 focus:border-pink-500 focus:outline-none">
-                        <span class="text-xs text-slate-400 font-semibold w-7">${unit}</span>
+                            class="w-16 bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-xs md:text-sm text-center text-amber-300 focus:border-pink-500 focus:outline-none">
+                        <span class="text-xs text-slate-400 w-7">${unit}</span>
                     </div>
                 `;
                 container.appendChild(row);
@@ -503,7 +518,7 @@
         }
 
         /* ----------------------------------------------------
-           4. 슬롯머신 스테이지 & 5열 고정 그리드 생성
+           4. 슬롯머신 스테이지 & 정사각형 가득 찬 그리드 생성
         ---------------------------------------------------- */
         function goToSlotStage() {
             drawSlotCount = Math.max(1, Math.min(40, parseInt(document.getElementById('draw-count-input').value) || 1));
@@ -522,42 +537,39 @@
             document.getElementById('config-section').classList.remove('hidden');
         }
 
-        // [중요] 한 줄에 무조건 최대 5개, 가운데 정렬 그리드 빌드
+        // [핵심] 한 줄 최대 5개, 정사각형 비율 유지 및 텍스트 가득 채움
         function buildSlotGrid() {
             const grid = document.getElementById('slots-grid');
             grid.innerHTML = '';
 
-            let widthStyle = 'width: calc(20% - 12px); max-width: 190px; min-width: 130px;';
-            let heightClass = 'h-24 md:h-28';
-            let fontSizeClass = 'text-sm md:text-base';
+            let widthStyle = '';
+            let fontSizeClass = '';
+            let numSizeClass = 'text-xs md:text-sm';
 
             if (drawSlotCount === 1) {
-                widthStyle = 'width: 100%; max-width: 380px;';
-                heightClass = 'h-44 md:h-52';
-                fontSizeClass = 'text-3xl md:text-5xl';
+                widthStyle = 'width: min(70vw, 340px);';
+                fontSizeClass = 'text-4xl md:text-6xl';
+                numSizeClass = 'text-base md:text-lg';
             } else if (drawSlotCount === 2) {
-                widthStyle = 'width: calc(50% - 12px); max-width: 320px;';
-                heightClass = 'h-32 md:h-36';
-                fontSizeClass = 'text-2xl md:text-3xl';
+                widthStyle = 'width: min(42vw, 260px);';
+                fontSizeClass = 'text-3xl md:text-5xl';
             } else if (drawSlotCount <= 4) {
-                widthStyle = `width: calc(${100 / drawSlotCount}% - 12px); max-width: 240px;`;
-                heightClass = 'h-28 md:h-32';
-                fontSizeClass = 'text-lg md:text-xl';
+                widthStyle = `width: min(${Math.floor(90 / drawSlotCount)}vw, 210px);`;
+                fontSizeClass = 'text-2xl md:text-4xl';
             } else {
-                // 5개 이상일 때는 5열 고정 비율 적용 (6개 -> 5개/1개 형태 줄바꿈)
-                widthStyle = 'width: calc(20% - 12px); max-width: 190px; min-width: 120px;';
-                heightClass = 'h-20 md:h-24';
-                fontSizeClass = 'text-xs md:text-sm';
+                // 5개 이상일 때는 5열 고정 비율 (정사각형 유지)
+                widthStyle = 'width: calc(20% - 16px); min-width: 120px; max-width: 185px;';
+                fontSizeClass = 'text-xl md:text-2xl lg:text-3xl';
             }
 
             for (let i = 0; i < drawSlotCount; i++) {
                 const slot = document.createElement('div');
                 slot.id = `slot-item-${i}`;
                 slot.style = widthStyle;
-                slot.className = `slot-cell rounded-2xl p-2 flex flex-col justify-center items-center relative flex-shrink-0 ${heightClass}`;
+                slot.className = `slot-cell rounded-3xl p-3 flex flex-col justify-center items-center relative flex-shrink-0`;
                 slot.innerHTML = `
-                    <div class="absolute top-1.5 left-2.5 text-[10px] md:text-xs font-bold text-slate-400">#${i + 1}</div>
-                    <div class="slot-text font-jua ${fontSizeClass} text-amber-300 text-center tracking-wide px-1 truncate w-full">
+                    <div class="absolute top-2.5 left-3 ${numSizeClass} text-slate-400">#${i + 1}</div>
+                    <div class="slot-text ${fontSizeClass} text-amber-300 text-center tracking-wider w-full px-1 break-keep leading-tight drop-shadow-md">
                         준비
                     </div>
                 `;
@@ -566,7 +578,7 @@
         }
 
         /* ----------------------------------------------------
-           5. 당첨/꽝 자동 판별 & 다중 슬롯 회전
+           5. 순수 독립 시행 무작위 추첨 (보정 전혀 없음)
         ---------------------------------------------------- */
         function checkIfLoseItem(name, itemIndex) {
             const loseKeywords = ['꽝', '다음', '실패', '탈락', '노당첨', 'x', 'lose'];
@@ -575,7 +587,6 @@
 
             if (hasKeyword) return true;
 
-            // 만약 아무 항목에도 꽝 키워드가 없다면, 마지막 번호 항목을 꽝으로 간주
             const anyHasKeyword = options.some(o => loseKeywords.some(kw => o.name.toLowerCase().includes(kw)));
             if (!anyHasKeyword && itemIndex === options.length - 1) {
                 return true;
@@ -583,9 +594,10 @@
             return false;
         }
 
+        // 정확한 독립시행 가중치 랜덤 함수
         function getRandomPickedItem() {
             const totalWeight = options.reduce((sum, o) => sum + (parseFloat(o.val) || 0), 0);
-            const rand = Math.random() * totalWeight;
+            const rand = Math.random() * totalWeight; // 0 ~ totalWeight 사이 순수 난수
             let acc = 0;
             for (let i = 0; i < options.length; i++) {
                 acc += (parseFloat(options[i].val) || 0);
@@ -608,6 +620,7 @@
             backBtn.classList.add('opacity-30', 'pointer-events-none');
             spinBtnText.innerText = "추첨 롤링 중...";
 
+            // 매 슬롯마다 독립적으로 100% 무작위 추첨 실행
             const slotResults = [];
             for (let i = 0; i < drawSlotCount; i++) {
                 slotResults.push(getRandomPickedItem());
@@ -653,12 +666,9 @@
                     
                     textEl.innerText = res.name;
                     textEl.style.opacity = '1';
-                    textEl.classList.add('scale-110');
-                    setTimeout(() => textEl.classList.remove('scale-110'), 200);
 
                     playStopThud();
 
-                    // 누적 기록 추가
                     historyLogs.unshift({
                         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                         slotNum: currentStopIndex + 1,
@@ -680,13 +690,11 @@
                     const hasWinner = slotResults.some(r => !checkIfLoseItem(r.name, r.itemIdx));
 
                     if (hasWinner) {
-                        // 1개라도 당첨이 있는 경우 -> 팡파레 & 꽃가루 폭죽
                         if (typeof confetti === 'function') {
                             confetti({ particleCount: 130, spread: 85, origin: { y: 0.6 } });
                         }
                         playFanfare();
                     } else {
-                        // 전원 꽝인 경우 -> 실망스러운 띠로리로리 사운드
                         playFailSound();
                     }
 
@@ -721,9 +729,9 @@
                 const pct = Math.round((cnt / historyLogs.length) * 100);
                 return `
                     <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs shadow">
-                        <span class="text-slate-300 font-medium">${name}:</span>
-                        <span class="text-amber-300 font-bold">${cnt}회</span>
-                        <span class="text-[10px] text-slate-500 font-semibold">(${pct}%)</span>
+                        <span class="text-slate-300">${name}:</span>
+                        <span class="text-amber-300">${cnt}회</span>
+                        <span class="text-[10px] text-slate-500">(${pct}%)</span>
                     </div>
                 `;
             }).join('');
