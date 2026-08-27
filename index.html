@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>두근두근 만능 확률 뽑기</title>
+    <title>두근두근 교실 추첨기</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Canvas Confetti -->
@@ -13,256 +13,235 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        jua: ['Jua', 'sans-serif'],
-                        sans: ['Noto Sans KR', 'sans-serif']
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.22), transparent 35%),
+                        radial-gradient(circle at 80% 80%, rgba(244, 63, 94, 0.2), transparent 35%),
+                        linear-gradient(135deg, #070913 0%, #0f172a 50%, #1e102d 100%);
             min-height: 100vh;
         }
         .font-jua {
             font-family: 'Jua', sans-serif;
         }
-        .slot-window {
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(244, 63, 94, 0.4);
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        /* Slot Reel Box Styles */
+        .slot-cell {
+            background: linear-gradient(180deg, #090d16 0%, #171f38 50%, #090d16 100%);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.5); }
-            50% { box-shadow: 0 0 35px rgba(244, 63, 94, 0.9); }
+        .slot-cell.spinning {
+            border-color: rgba(244, 63, 94, 0.6);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(244, 63, 94, 0.4);
         }
-        .animate-pulse-glow {
-            animation: pulse-glow 2s infinite;
+        .slot-cell.stopped-win {
+            border-color: rgba(250, 204, 21, 0.9);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 20px rgba(250, 204, 21, 0.4);
+            background: linear-gradient(180deg, #1e1b4b 0%, #2e1065 50%, #090d16 100%);
         }
+        .slot-cell.stopped-lose {
+            border-color: rgba(100, 116, 139, 0.6);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+            opacity: 0.75;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="text-slate-100 flex flex-col min-h-screen p-3 md:p-6">
-    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col">
-        <!-- Header -->
-        <header class="text-center py-4 mb-4">
-            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 px-4 py-1.5 rounded-full mb-2">
-                <i class="fa-solid fa-clover text-pink-400"></i>
-                <span class="text-sm font-semibold text-pink-200">두근두근 만능 이벤트</span>
+<body class="text-slate-100 flex flex-col min-h-screen p-3 md:p-6 select-none">
+    <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-between">
+        
+        <!-- HEADER -->
+        <header class="text-center py-2 mb-3">
+            <div class="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-500/20 px-3.5 py-1 rounded-full mb-1">
+                <i class="fa-solid fa-clover text-pink-400 text-xs"></i>
+                <span class="text-xs font-semibold text-pink-200">교실 만능 다중 슬롯머신</span>
             </div>
-            <h1 class="text-3xl md:text-5xl font-jua tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-pink-400 to-purple-300 drop-shadow-md">
-                🎰 두근두근 확률 뽑기
+            <h1 class="text-3xl md:text-5xl font-jua tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 drop-shadow">
+                🎰 두근두근 멀티 슬롯 추첨기
             </h1>
         </header>
 
-        <!-- MAIN CONTAINER -->
+        <!-- MAIN VIEW CONTAINER -->
         <main class="flex-grow flex flex-col justify-center">
-            
-            <!-- SECTION 1: CONFIGURATION PANEL (설정 화면) -->
-            <section id="config-section" class="glass-card rounded-2xl p-5 md:p-8 shadow-2xl transition-all duration-300">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 mb-6 gap-3">
-                    <div>
-                        <h2 class="text-2xl font-jua text-amber-300 flex items-center gap-2">
-                            <i class="fa-solid fa-sliders"></i> 뽑기 옵션 및 확률 설정
-                        </h2>
-                        <p class="text-xs md:text-sm text-slate-300">원하는 선택지와 확률을 자유롭게 입력하세요.</p>
+
+            <!-- 1. CONFIGURATION VIEW (설정 화면) -->
+            <section id="config-section" class="glass-panel rounded-3xl p-5 md:p-8 shadow-2xl space-y-6">
+                
+                <!-- 상단 옵션 설정: 모드 / 항목수 / 추첨횟수 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-white/10 pb-5">
+                    
+                    <!-- 1. 확률 입력 방식 -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-calculator text-indigo-400"></i> 확률 방식 선택
+                        </label>
+                        <div class="grid grid-cols-2 gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/5">
+                            <button type="button" onclick="setProbMode('percent')" id="btn-mode-percent" class="py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-600 to-rose-600 text-white transition">
+                                퍼센트(%)
+                            </button>
+                            <button type="button" onclick="setProbMode('fraction')" id="btn-mode-fraction" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+                                분수/비율(가중치)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. 항목 개수 (2~6개) -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-ol text-pink-400"></i> 선택지 개수
+                        </label>
+                        <div class="grid grid-cols-5 gap-1 bg-black/40 p-1.5 rounded-2xl border border-white/5">
+                            <button type="button" onclick="setOptionCount(2)" id="btn-cnt-2" class="py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow">2개</button>
+                            <button type="button" onclick="setOptionCount(3)" id="btn-cnt-3" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">3개</button>
+                            <button type="button" onclick="setOptionCount(4)" id="btn-cnt-4" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">4개</button>
+                            <button type="button" onclick="setOptionCount(5)" id="btn-cnt-5" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">5개</button>
+                            <button type="button" onclick="setOptionCount(6)" id="btn-cnt-6" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">6개</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. 슬롯(추첨) 개수 (1~40개) -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-ticket text-amber-400"></i> 추첨할 슬롯 개수 (1~40개)
+                        </label>
+                        <div class="flex items-center justify-between bg-black/40 p-1.5 rounded-2xl border border-white/5">
+                            <button type="button" onclick="adjustDrawCount(-5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">-5</button>
+                            <button type="button" onclick="adjustDrawCount(-1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">-1</button>
+                            <input type="number" id="draw-count-input" value="5" min="1" max="40" class="w-14 bg-transparent text-center text-lg font-black text-amber-300 focus:outline-none">
+                            <button type="button" onclick="adjustDrawCount(1)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">+1</button>
+                            <button type="button" onclick="adjustDrawCount(5)" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">+5</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Option Count Selector -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2 text-pink-200">
-                        1. 선택지 개수 설정 (1 ~ 5개)
-                    </label>
-                    <div class="grid grid-cols-5 gap-2 max-w-xs">
-                        <button type="button" onclick="setOptionCount(1)" id="btn-count-1" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">1개</button>
-                        <button type="button" onclick="setOptionCount(2)" id="btn-count-2" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">2개</button>
-                        <button type="button" onclick="setOptionCount(3)" id="btn-count-3" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">3개</button>
-                        <button type="button" onclick="setOptionCount(4)" id="btn-count-4" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">4개</button>
-                        <button type="button" onclick="setOptionCount(5)" id="btn-count-5" class="count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold hover:border-pink-500 transition">5개</button>
+                <!-- 옵션 목록 입력 영역 -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-pink-200">
+                            선택지 항목 및 확률값 설정
+                        </label>
+                        <span id="prob-hint-text" class="text-[11px] text-slate-400">퍼센트 합계가 정확히 100%여야 합니다.</span>
+                    </div>
+
+                    <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        <!-- 동적으로 렌더링됨 -->
                     </div>
                 </div>
 
-                <!-- Option Items Inputs -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2 text-pink-200">
-                        2. 선택지 항목 및 확률 설정 (합계가 정확히 100%여야 함)
-                    </label>
-
-                    <div id="options-container" class="space-y-3">
-                        <!-- Dynamic option rows will be generated here -->
-                    </div>
-                </div>
-
-                <!-- Total Percentage Status Banner -->
-                <div id="status-banner" class="rounded-xl p-4 mb-6 flex items-center justify-between transition-all">
+                <!-- 상태 검증 배너 -->
+                <div id="status-banner" class="rounded-2xl p-3.5 md:p-4 flex items-center justify-between transition-all">
                     <div class="flex items-center gap-3">
-                        <span id="status-icon" class="text-2xl">
+                        <span id="status-icon" class="text-xl md:text-2xl">
                             <i class="fa-solid fa-circle-notch fa-spin"></i>
                         </span>
                         <div>
-                            <div id="status-title" class="font-bold text-sm md:text-base">확률 계산 중...</div>
-                            <div id="status-desc" class="text-xs opacity-90">선택지 확률의 총합을 확인하는 중입니다.</div>
+                            <div id="status-title" class="font-bold text-xs md:text-sm">확률 계산 중...</div>
+                            <div id="status-desc" class="text-[11px] opacity-80">선택지 확률의 총합을 확인하는 중입니다.</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="text-xs block text-slate-300">총 확률</span>
-                        <span id="total-percent-display" class="font-jua text-2xl md:text-3xl">0%</span>
+                        <span class="text-[10px] block text-slate-400" id="status-total-label">총 확률</span>
+                        <span id="status-total-display" class="font-jua text-xl md:text-2xl">0%</span>
                     </div>
                 </div>
 
-                <!-- Sound Option & Start Button -->
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+                <!-- 하단 시작 버튼 -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer">
                         <input type="checkbox" id="sound-toggle" checked class="w-4 h-4 accent-pink-500 rounded">
                         <span><i class="fa-solid fa-volume-high text-pink-400"></i> 사운드 효과 ON</span>
                     </label>
 
-                    <button id="start-game-btn" onclick="goToGame()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-jua text-xl rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <span>게임 시작하기</span>
+                    <button id="btn-to-stage" onclick="goToSlotStage()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-indigo-600 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white font-jua text-xl rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span>슬롯머신 입장하기</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
                 </div>
             </section>
 
-            <!-- SECTION 2: GAME STAGE (뽑기 진행 화면) -->
-            <section id="game-section" class="hidden glass-card rounded-2xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
+            <!-- 2. MULTI SLOT STAGE VIEW (슬롯머신 추첨 진행 화면) -->
+            <section id="slot-stage-section" class="hidden glass-panel rounded-3xl p-5 md:p-7 shadow-2xl space-y-5">
                 
-                <!-- Navigation & Student Name Input -->
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-white/10">
-                    <button onclick="goToConfig()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 text-slate-300">
-                        <i class="fa-solid fa-gear"></i> 설정 수정
+                <!-- 슬롯 상단 바 -->
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <button onclick="goToConfig()" id="btn-back-setup" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300">
+                        <i class="fa-solid fa-sliders"></i> 설정 수정하기
                     </button>
 
-                    <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
-                        <i class="fa-solid fa-user text-pink-400 text-sm"></i>
-                        <input type="text" id="student-name-input" placeholder="참여자 이름/번호 (선택)" class="bg-transparent text-sm focus:outline-none w-36 text-pink-200 placeholder-slate-500">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">총 슬롯 수:</span>
+                        <span id="display-slot-count-badge" class="px-3 py-1 bg-pink-500/20 border border-pink-500/40 text-pink-300 rounded-lg text-xs font-bold">5개</span>
+                    </div>
+
+                    <button id="btn-spin-all" onclick="startMultiSlotSpin()" class="px-6 py-2.5 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:brightness-110 font-jua text-lg text-slate-950 rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-rotate text-slate-950"></i>
+                        <span id="spin-btn-text">전체 슬롯 돌리기!</span>
+                    </button>
+                </div>
+
+                <!-- SLOTS GRID BOARD (한 줄 최대 5개, 가로폭 고정 및 완벽한 중앙 정렬) -->
+                <div class="p-2 md:p-5 bg-slate-950/80 rounded-3xl border border-white/5 min-h-[280px] max-h-[58vh] overflow-y-auto flex items-center justify-center">
+                    <div id="slots-grid" class="w-full flex flex-wrap justify-center content-center gap-3 md:gap-3.5 max-w-[1050px] mx-auto p-1">
+                        <!-- 동적으로 슬롯 셀이 주입됨 -->
                     </div>
                 </div>
 
-                <!-- SLOT MACHINE STAGE -->
-                <div class="flex flex-col items-center justify-center my-4">
-                    
-                    <!-- Slot Display Box -->
-                    <div class="relative w-full max-w-md bg-slate-950 rounded-2xl p-6 border-4 border-pink-500/50 slot-window animate-pulse-glow text-center my-4">
-                        <div class="text-xs font-semibold text-pink-400 tracking-wider uppercase mb-2">
-                            <i class="fa-solid fa-dice text-amber-400"></i> 무엇이 나올까요?
-                        </div>
-                        
-                        <!-- Slot Reel Screen -->
-                        <div id="slot-reel-window" class="h-28 overflow-hidden relative flex items-center justify-center rounded-xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700">
-                            <div id="slot-reel-text" class="font-jua text-3xl md:text-4xl text-amber-300 transition-all transform">
-                                🎁 준비 완료!
-                            </div>
-                        </div>
-
-                        <!-- Pointer Indicator -->
-                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-amber-400 text-slate-950 px-3 py-0.5 rounded-full text-xs font-bold shadow">
-                            CHANCE
-                        </div>
-                    </div>
-
-                    <!-- Result Card Reveal Overlay (Shown after roll) -->
-                    <div id="result-modal" class="hidden my-2 p-4 bg-gradient-to-r from-purple-900/80 to-pink-900/80 border border-pink-400/50 rounded-2xl w-full max-w-md text-center transform animate-bounce-short">
-                        <div id="result-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 bg-amber-400 text-slate-900">
-                            결과 발표
-                        </div>
-                        <div id="result-title" class="font-jua text-4xl text-amber-200 mb-1">
-                            결과 나오는 중
-                        </div>
-                        <div id="result-desc" class="text-xs text-slate-200">
-                            축하합니다!
-                        </div>
-                    </div>
-
-                    <!-- Spin Controls -->
-                    <div class="mt-4 flex flex-col sm:flex-row gap-3 w-full max-w-md">
-                        <button id="spin-btn" onclick="startSpin()" class="flex-1 py-4 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:opacity-90 font-jua text-2xl text-slate-950 rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-rotate text-slate-950"></i>
-                            <span id="spin-btn-text">뽑기 돌리기!</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- SECTION 3: HISTORY LOG (진행 기록판) -->
-                <div class="mt-8 pt-6 border-t border-white/10">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-jua text-lg text-slate-200 flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-pink-400"></i> 진행 및 뽑기 기록 (<span id="history-count">0</span>회)
+                <!-- STATS & HISTORY PANEL -->
+                <div class="pt-3 border-t border-white/10 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-jua text-base text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-pink-400"></i> 실시간 누적 추첨 결과 (<span id="total-roll-count">0</span>회 누적)
                         </h3>
-                        <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-rose-400 transition">
-                            <i class="fa-solid fa-trash-can"></i> 기록 초기화
+                        <button onclick="clearHistoryLogs()" class="text-[11px] text-slate-400 hover:text-rose-400 transition flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> 기록 비우기
                         </button>
                     </div>
 
-                    <!-- Quick Stats Badges -->
-                    <div id="stats-container" class="flex flex-wrap gap-2 mb-4">
-                        <!-- Stat badges dynamically generated -->
-                    </div>
-
-                    <!-- History Scroll Box -->
-                    <div class="max-h-40 overflow-y-auto bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-sm">
-                        <div id="history-list" class="space-y-2">
-                            <p class="text-xs text-slate-500 text-center py-2">아직 진행된 뽑기 기록이 없습니다.</p>
-                        </div>
+                    <!-- 통계 뱃지 목록 -->
+                    <div id="stats-badge-list" class="flex flex-wrap gap-2">
+                        <!-- 동적 통계 태그 -->
                     </div>
                 </div>
-
             </section>
         </main>
 
-        <!-- Footer -->
-        <footer class="text-center text-xs text-slate-400 py-4 mt-4">
-            두근두근 만능 이벤트 뽑기 웹앱
+        <!-- FOOTER -->
+        <footer class="text-center text-[11px] text-slate-500 py-3">
+            두근두근 교실 멀티 슬롯머신 &bull; 5열 반응형 센터 그리드 & 사운드 엔진
         </footer>
     </div>
 
-    <!-- UI Alert Modal -->
-    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card bg-slate-900 border border-pink-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
-            <div id="modal-icon" class="text-4xl text-amber-400 mb-2">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 id="modal-title" class="font-jua text-2xl text-slate-100 mb-2">알림</h3>
-            <p id="modal-body" class="text-sm text-slate-300 mb-6">내용이 들어갑니다.</p>
-            <button onclick="closeModal()" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl transition">
-                확인
-            </button>
-        </div>
-    </div>
-
     <script>
-        // APP STATE
-        let optionCount = 3;
-        let options = [
-            { id: 1, name: '선택지 A', percent: 20 },
-            { id: 2, name: '선택지 B', percent: 30 },
-            { id: 3, name: '선택지 C', percent: 50 }
-        ];
-        let historyLogs = [];
+        /* ----------------------------------------------------
+           1. 상태 변수 및 기본값 (기본: 당첨 / 꽝 2개)
+        ---------------------------------------------------- */
+        let probMode = 'percent'; // 'percent' or 'fraction'
+        let optionCount = 2;       // 기본 2개 항목으로 시작
+        let drawSlotCount = 5;     // 기본 5개 슬롯
         let isSpinning = false;
 
-        // AUDIO SYNTHESIZER (Web Audio API)
-        let audioCtx = null;
+        let options = [
+            { id: 1, name: '당첨 🎉', val: 20 },
+            { id: 2, name: '꽝 💀', val: 80 }
+        ];
 
+        let historyLogs = [];
+
+        /* ----------------------------------------------------
+           2. Web Audio API 사운드 엔진 (팡파레 & 실망 사운드)
+        ---------------------------------------------------- */
+        let audioCtx = null;
         function getAudioContext() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -279,23 +258,38 @@
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(350 + Math.random() * 100, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.05);
-
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.05);
-
+                osc.frequency.setValueAtTime(320 + Math.random() * 120, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.04);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 osc.start();
-                osc.stop(ctx.currentTime + 0.05);
+                osc.stop(ctx.currentTime + 0.04);
             } catch(e) {}
         }
 
-        function playWinFanfare() {
+        function playStopThud() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.09);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.09);
+            } catch(e) {}
+        }
+
+        // 🎺 신나는 축하 팡파레 (당첨자가 1명이라도 있을 때)
+        function playFanfare() {
             if (!document.getElementById('sound-toggle').checked) return;
             try {
                 const ctx = getAudioContext();
@@ -305,35 +299,106 @@
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-                    
-                    gain.gain.setValueAtTime(0, now + idx * 0.1);
-                    gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.1 + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.4);
-
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                    gain.gain.setValueAtTime(0, now + idx * 0.09);
+                    gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.09 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.35);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
-
-                    osc.start(now + idx * 0.1);
-                    osc.stop(now + idx * 0.1 + 0.4);
+                    osc.start(now + idx * 0.09);
+                    osc.stop(now + idx * 0.09 + 0.35);
                 });
             } catch(e) {}
         }
 
+        // 💀 실망스러운 '띠로리로리~' 사운드 (전원 꽝일 때)
+        function playFailSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const notes = [349.23, 329.63, 311.13, 270.00];
+                const durations = [0.25, 0.25, 0.25, 0.6];
+                
+                let curTime = now;
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, curTime);
+                    
+                    if (idx === 3) {
+                        osc.frequency.linearRampToValueAtTime(220.00, curTime + durations[idx]);
+                    }
+
+                    gain.gain.setValueAtTime(0.18, curTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, curTime + durations[idx]);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(curTime);
+                    osc.stop(curTime + durations[idx]);
+
+                    curTime += durations[idx];
+                });
+            } catch(e) {}
+        }
+
+        /* ----------------------------------------------------
+           3. 설정 화면 로직
+        ---------------------------------------------------- */
         window.onload = function() {
             renderOptionInputs();
             validatePercentages();
         };
 
+        function setProbMode(mode) {
+            probMode = mode;
+            const btnPct = document.getElementById('btn-mode-percent');
+            const btnFrac = document.getElementById('btn-mode-fraction');
+            const hint = document.getElementById('prob-hint-text');
+
+            if (mode === 'percent') {
+                btnPct.className = "py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-600 to-rose-600 text-white transition shadow";
+                btnFrac.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                hint.innerText = "퍼센트 합계가 정확히 100%여야 합니다.";
+                // 기본값 전환
+                if (options.length === 2 && options[0].val === 1 && options[1].val === 4) {
+                    options[0].val = 20;
+                    options[1].val = 80;
+                }
+            } else {
+                btnFrac.className = "py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-sky-600 text-white transition shadow";
+                btnPct.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                hint.innerText = "가중치(비율)를 정수로 자유롭게 입력하세요. (예: 1 : 4)";
+                // 기본값 전환
+                if (options.length === 2 && options[0].val === 20 && options[1].val === 80) {
+                    options[0].val = 1;
+                    options[1].val = 4;
+                }
+            }
+            renderOptionInputs();
+            validatePercentages();
+        }
+
         function setOptionCount(count) {
             optionCount = count;
-            
+            for (let i = 2; i <= 6; i++) {
+                const btn = document.getElementById(`btn-cnt-${i}`);
+                if (i === count) {
+                    btn.className = "py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow";
+                } else {
+                    btn.className = "py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                }
+            }
+
             while (options.length < count) {
-                const newId = options.length + 1;
+                const nextId = options.length + 1;
                 options.push({
-                    id: newId,
-                    name: `선택지 ${String.fromCharCode(64 + newId)}`,
-                    percent: 0
+                    id: nextId,
+                    name: `항목 ${String.fromCharCode(64 + nextId)}`,
+                    val: probMode === 'percent' ? 0 : 1
                 });
             }
             if (options.length > count) {
@@ -344,248 +409,330 @@
             validatePercentages();
         }
 
-        function renderOptionInputs() {
-            for (let i = 1; i <= 5; i++) {
-                const btn = document.getElementById(`btn-count-${i}`);
-                if (i === optionCount) {
-                    btn.className = "count-btn py-2 rounded-xl bg-pink-600 border border-pink-400 font-bold text-white shadow transition";
-                } else {
-                    btn.className = "count-btn py-2 rounded-xl bg-slate-800 border border-slate-600 font-bold text-slate-300 hover:border-pink-500 transition";
-                }
-            }
+        function adjustDrawCount(delta) {
+            const input = document.getElementById('draw-count-input');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, Math.min(40, val + delta));
+            input.value = val;
+            drawSlotCount = val;
+        }
 
+        document.getElementById('draw-count-input').addEventListener('input', (e) => {
+            let val = parseInt(e.target.value) || 1;
+            drawSlotCount = Math.max(1, Math.min(40, val));
+        });
+
+        function renderOptionInputs() {
             const container = document.getElementById('options-container');
             container.innerHTML = '';
 
+            const unit = probMode === 'percent' ? '%' : '비율';
+
             options.forEach((opt, idx) => {
                 const row = document.createElement('div');
-                row.className = "flex flex-col sm:flex-row items-center gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800";
+                row.className = "flex items-center gap-2 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800";
                 row.innerHTML = `
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 font-bold text-xs flex items-center justify-center border border-slate-700">${idx + 1}</span>
-                    </div>
-
-                    <input type="text" value="${opt.name}" oninput="updateOptionName(${idx}, this.value)" placeholder="항목 이름을 입력하세요" 
-                        class="flex-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-pink-500 focus:outline-none">
-
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        <label class="text-xs text-slate-400">확률(%):</label>
-                        <input type="number" min="0" max="100" value="${opt.percent}" oninput="updateOptionPercent(${idx}, this.value)" 
-                            class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center font-bold text-amber-300 focus:border-pink-500 focus:outline-none">
+                    <span class="w-6 h-6 rounded-full bg-slate-800 text-pink-400 font-bold text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">${idx + 1}</span>
+                    <input type="text" value="${opt.name}" oninput="updateOptName(${idx}, this.value)" placeholder="항목 이름" 
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs md:text-sm text-slate-100 focus:border-pink-500 focus:outline-none">
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <input type="number" min="0" step="any" value="${opt.val}" oninput="updateOptVal(${idx}, this.value)"
+                            class="w-16 bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-xs md:text-sm text-center font-bold text-amber-300 focus:border-pink-500 focus:outline-none">
+                        <span class="text-xs text-slate-400 font-semibold w-7">${unit}</span>
                     </div>
                 `;
                 container.appendChild(row);
             });
         }
 
-        function updateOptionName(idx, val) {
-            options[idx].name = val;
-        }
-
-        function updateOptionPercent(idx, val) {
-            options[idx].percent = parseFloat(val) || 0;
-            validatePercentages();
+        function updateOptName(idx, v) { options[idx].name = v; }
+        function updateOptVal(idx, v) { 
+            options[idx].val = parseFloat(v) || 0; 
+            validatePercentages(); 
         }
 
         function validatePercentages() {
-            const total = options.reduce((sum, item) => sum + (parseFloat(item.percent) || 0), 0);
-            const formattedTotal = Math.round(total * 10) / 10;
-
+            const total = options.reduce((sum, o) => sum + (parseFloat(o.val) || 0), 0);
             const banner = document.getElementById('status-banner');
             const icon = document.getElementById('status-icon');
             const title = document.getElementById('status-title');
             const desc = document.getElementById('status-desc');
-            const display = document.getElementById('total-percent-display');
-            const startBtn = document.getElementById('start-game-btn');
+            const totalLabel = document.getElementById('status-total-label');
+            const totalDisplay = document.getElementById('status-total-display');
+            const startBtn = document.getElementById('btn-to-stage');
 
-            display.innerText = `${formattedTotal}%`;
+            if (probMode === 'percent') {
+                const formatted = Math.round(total * 10) / 10;
+                totalLabel.innerText = "확률 총합";
+                totalDisplay.innerText = `${formatted}%`;
 
-            if (Math.abs(formattedTotal - 100) < 0.1) {
-                banner.className = "rounded-xl p-4 mb-6 flex items-center justify-between bg-emerald-950/60 border border-emerald-500/50 text-emerald-200 transition-all";
-                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
-                title.innerText = "설정 완료! 준비 되었습니다.";
-                desc.innerText = "모든 확률의 합이 정확히 100%입니다. 게임을 시작하세요!";
-                startBtn.disabled = false;
+                if (Math.abs(formatted - 100) < 0.01) {
+                    banner.className = "rounded-2xl p-3.5 md:p-4 flex items-center justify-between bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 transition-all";
+                    icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                    title.innerText = "설정 완료!";
+                    desc.innerText = "합계가 100%입니다. 슬롯머신을 시작할 수 있습니다.";
+                    startBtn.disabled = false;
+                } else {
+                    banner.className = "rounded-2xl p-3.5 md:p-4 flex items-center justify-between bg-rose-950/60 border border-rose-500/40 text-rose-200 transition-all";
+                    icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
+                    title.innerText = "확률 수정 필요";
+                    desc.innerText = formatted > 100 
+                        ? `${(formatted - 100).toFixed(1)}% 초과되었습니다.` 
+                        : `${(100 - formatted).toFixed(1)}% 부족합니다.`;
+                    startBtn.disabled = true;
+                }
             } else {
-                banner.className = "rounded-xl p-4 mb-6 flex items-center justify-between bg-rose-950/60 border border-rose-500/50 text-rose-200 transition-all";
-                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
-                title.innerText = "확률 수정 필요!";
-                desc.innerText = formattedTotal > 100 
-                    ? `확률의 합이 100%를 초과했습니다 (${(formattedTotal - 100).toFixed(1)}% 초과). 값을 낮춰주세요.`
-                    : `확률의 합이 100%에 부족합니다 (${(100 - formattedTotal).toFixed(1)}% 부족). 값을 올려주세요.`;
-                startBtn.disabled = true;
+                totalLabel.innerText = "가중치 합";
+                totalDisplay.innerText = `${total}`;
+
+                if (total > 0) {
+                    banner.className = "rounded-2xl p-3.5 md:p-4 flex items-center justify-between bg-sky-950/60 border border-sky-500/40 text-sky-200 transition-all";
+                    icon.innerHTML = '<i class="fa-solid fa-circle-check text-sky-400"></i>';
+                    title.innerText = "비율 설정 완료!";
+                    const preview = options.map(o => `${Math.round(((o.val || 0) / total) * 100)}%`).join(' : ');
+                    desc.innerText = `실제 환산 확률: [ ${preview} ]`;
+                    startBtn.disabled = false;
+                } else {
+                    banner.className = "rounded-2xl p-3.5 md:p-4 flex items-center justify-between bg-rose-950/60 border border-rose-500/40 text-rose-200 transition-all";
+                    icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
+                    title.innerText = "가중치 입력 필요";
+                    desc.innerText = "1 이상의 가중치를 입력해주세요.";
+                    startBtn.disabled = true;
+                }
             }
         }
 
-        function goToGame() {
+        /* ----------------------------------------------------
+           4. 슬롯머신 스테이지 & 5열 고정 그리드 생성
+        ---------------------------------------------------- */
+        function goToSlotStage() {
+            drawSlotCount = Math.max(1, Math.min(40, parseInt(document.getElementById('draw-count-input').value) || 1));
+            document.getElementById('display-slot-count-badge').innerText = `${drawSlotCount}개`;
+
             document.getElementById('config-section').classList.add('hidden');
-            document.getElementById('game-section').classList.remove('hidden');
-            resetSlotDisplay();
+            document.getElementById('slot-stage-section').classList.remove('hidden');
+
+            buildSlotGrid();
             updateHistoryUI();
         }
 
         function goToConfig() {
-            document.getElementById('game-section').classList.add('hidden');
+            if (isSpinning) return;
+            document.getElementById('slot-stage-section').classList.add('hidden');
             document.getElementById('config-section').classList.remove('hidden');
         }
 
-        function resetSlotDisplay() {
-            document.getElementById('result-modal').classList.add('hidden');
-            document.getElementById('slot-reel-text').innerText = "🎁 준비 완료!";
-            document.getElementById('slot-reel-text').className = "font-jua text-3xl md:text-4xl text-amber-300 transition-all transform";
-        }
+        // [중요] 한 줄에 무조건 최대 5개, 가운데 정렬 그리드 빌드
+        function buildSlotGrid() {
+            const grid = document.getElementById('slots-grid');
+            grid.innerHTML = '';
 
-        function getRandomOption() {
-            const rand = Math.random() * 100;
-            let cumulative = 0;
-            for (let i = 0; i < options.length; i++) {
-                cumulative += options[i].percent;
-                if (rand <= cumulative) {
-                    return options[i];
-                }
+            let widthStyle = 'width: calc(20% - 12px); max-width: 190px; min-width: 130px;';
+            let heightClass = 'h-24 md:h-28';
+            let fontSizeClass = 'text-sm md:text-base';
+
+            if (drawSlotCount === 1) {
+                widthStyle = 'width: 100%; max-width: 380px;';
+                heightClass = 'h-44 md:h-52';
+                fontSizeClass = 'text-3xl md:text-5xl';
+            } else if (drawSlotCount === 2) {
+                widthStyle = 'width: calc(50% - 12px); max-width: 320px;';
+                heightClass = 'h-32 md:h-36';
+                fontSizeClass = 'text-2xl md:text-3xl';
+            } else if (drawSlotCount <= 4) {
+                widthStyle = `width: calc(${100 / drawSlotCount}% - 12px); max-width: 240px;`;
+                heightClass = 'h-28 md:h-32';
+                fontSizeClass = 'text-lg md:text-xl';
+            } else {
+                // 5개 이상일 때는 5열 고정 비율 적용 (6개 -> 5개/1개 형태 줄바꿈)
+                widthStyle = 'width: calc(20% - 12px); max-width: 190px; min-width: 120px;';
+                heightClass = 'h-20 md:h-24';
+                fontSizeClass = 'text-xs md:text-sm';
             }
-            return options[options.length - 1];
+
+            for (let i = 0; i < drawSlotCount; i++) {
+                const slot = document.createElement('div');
+                slot.id = `slot-item-${i}`;
+                slot.style = widthStyle;
+                slot.className = `slot-cell rounded-2xl p-2 flex flex-col justify-center items-center relative flex-shrink-0 ${heightClass}`;
+                slot.innerHTML = `
+                    <div class="absolute top-1.5 left-2.5 text-[10px] md:text-xs font-bold text-slate-400">#${i + 1}</div>
+                    <div class="slot-text font-jua ${fontSizeClass} text-amber-300 text-center tracking-wide px-1 truncate w-full">
+                        준비
+                    </div>
+                `;
+                grid.appendChild(slot);
+            }
         }
 
-        function startSpin() {
+        /* ----------------------------------------------------
+           5. 당첨/꽝 자동 판별 & 다중 슬롯 회전
+        ---------------------------------------------------- */
+        function checkIfLoseItem(name, itemIndex) {
+            const loseKeywords = ['꽝', '다음', '실패', '탈락', '노당첨', 'x', 'lose'];
+            const lower = name.toLowerCase();
+            const hasKeyword = loseKeywords.some(kw => lower.includes(kw));
+
+            if (hasKeyword) return true;
+
+            // 만약 아무 항목에도 꽝 키워드가 없다면, 마지막 번호 항목을 꽝으로 간주
+            const anyHasKeyword = options.some(o => loseKeywords.some(kw => o.name.toLowerCase().includes(kw)));
+            if (!anyHasKeyword && itemIndex === options.length - 1) {
+                return true;
+            }
+            return false;
+        }
+
+        function getRandomPickedItem() {
+            const totalWeight = options.reduce((sum, o) => sum + (parseFloat(o.val) || 0), 0);
+            const rand = Math.random() * totalWeight;
+            let acc = 0;
+            for (let i = 0; i < options.length; i++) {
+                acc += (parseFloat(options[i].val) || 0);
+                if (rand <= acc) return { ...options[i], itemIdx: i };
+            }
+            return { ...options[options.length - 1], itemIdx: options.length - 1 };
+        }
+
+        function startMultiSlotSpin() {
             if (isSpinning) return;
             getAudioContext();
-            
             isSpinning = true;
-            const spinBtn = document.getElementById('spin-btn');
-            const reelText = document.getElementById('slot-reel-text');
-            const resultModal = document.getElementById('result-modal');
+
+            const spinBtn = document.getElementById('btn-spin-all');
+            const backBtn = document.getElementById('btn-back-setup');
+            const spinBtnText = document.getElementById('spin-btn-text');
 
             spinBtn.disabled = true;
             spinBtn.classList.add('opacity-50');
-            resultModal.classList.add('hidden');
+            backBtn.classList.add('opacity-30', 'pointer-events-none');
+            spinBtnText.innerText = "추첨 롤링 중...";
 
-            const selectedResult = getRandomOption();
-            const dummyItems = options.map(o => o.name);
+            const slotResults = [];
+            for (let i = 0; i < drawSlotCount; i++) {
+                slotResults.push(getRandomPickedItem());
+            }
 
-            let currentStep = 0;
-            let totalSteps = 30 + Math.floor(Math.random() * 10);
-            let speed = 50;
+            const dummyNames = options.map(o => o.name);
+            const slotElements = [];
+            for (let i = 0; i < drawSlotCount; i++) {
+                const el = document.getElementById(`slot-item-${i}`);
+                el.classList.remove('stopped-win', 'stopped-lose');
+                el.classList.add('spinning');
+                slotElements.push(el);
+            }
 
-            function step() {
-                currentStep++;
-                
-                const randomItem = dummyItems[Math.floor(Math.random() * dummyItems.length)];
-                reelText.innerText = randomItem;
-                reelText.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
-                
+            // 1. 전체 롤링 플리커 효과
+            let currentStopIndex = 0;
+            const rollInterval = setInterval(() => {
+                for (let i = currentStopIndex; i < drawSlotCount; i++) {
+                    const textEl = slotElements[i].querySelector('.slot-text');
+                    textEl.innerText = dummyNames[Math.floor(Math.random() * dummyNames.length)];
+                    textEl.style.opacity = (0.7 + Math.random() * 0.3).toFixed(2);
+                }
                 playTickSound();
+            }, 60);
 
-                if (currentStep < totalSteps) {
-                    if (currentStep > totalSteps - 15) {
-                        speed += 25;
-                    } else if (currentStep > totalSteps - 8) {
-                        speed += 50;
+            // 2. 순차 정지 시퀀스
+            function stopNextSlot() {
+                if (currentStopIndex < drawSlotCount) {
+                    const el = slotElements[currentStopIndex];
+                    const res = slotResults[currentStopIndex];
+                    const textEl = el.querySelector('.slot-text');
+
+                    el.classList.remove('spinning');
+                    
+                    const isLose = checkIfLoseItem(res.name, res.itemIdx);
+                    if (isLose) {
+                        el.classList.add('stopped-lose');
+                        textEl.className = textEl.className.replace('text-amber-300', 'text-slate-400');
+                    } else {
+                        el.classList.add('stopped-win');
+                        textEl.className = textEl.className.replace('text-slate-400', 'text-amber-300');
                     }
-                    setTimeout(step, speed);
+                    
+                    textEl.innerText = res.name;
+                    textEl.style.opacity = '1';
+                    textEl.classList.add('scale-110');
+                    setTimeout(() => textEl.classList.remove('scale-110'), 200);
+
+                    playStopThud();
+
+                    // 누적 기록 추가
+                    historyLogs.unshift({
+                        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                        slotNum: currentStopIndex + 1,
+                        name: res.name
+                    });
+
+                    currentStopIndex++;
+                    const stopDelay = drawSlotCount > 15 ? 50 : (drawSlotCount > 5 ? 90 : 160);
+                    setTimeout(stopNextSlot, stopDelay);
                 } else {
-                    setTimeout(() => {
-                        finishSpin(selectedResult);
-                    }, speed + 100);
+                    // 모든 슬롯 정지 완료 후 판정
+                    clearInterval(rollInterval);
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('opacity-50');
+                    backBtn.classList.remove('opacity-30', 'pointer-events-none');
+                    spinBtnText.innerText = "전체 슬롯 돌리기!";
+
+                    const hasWinner = slotResults.some(r => !checkIfLoseItem(r.name, r.itemIdx));
+
+                    if (hasWinner) {
+                        // 1개라도 당첨이 있는 경우 -> 팡파레 & 꽃가루 폭죽
+                        if (typeof confetti === 'function') {
+                            confetti({ particleCount: 130, spread: 85, origin: { y: 0.6 } });
+                        }
+                        playFanfare();
+                    } else {
+                        // 전원 꽝인 경우 -> 실망스러운 띠로리로리 사운드
+                        playFailSound();
+                    }
+
+                    updateHistoryUI();
                 }
             }
 
-            step();
+            setTimeout(() => {
+                stopNextSlot();
+            }, 1200);
         }
 
-        function finishSpin(result) {
-            isSpinning = false;
-            const spinBtn = document.getElementById('spin-btn');
-            const reelText = document.getElementById('slot-reel-text');
-            const resultModal = document.getElementById('result-modal');
-            const resultTitle = document.getElementById('result-title');
-            const resultDesc = document.getElementById('result-desc');
-            const resultBadge = document.getElementById('result-badge');
-
-            spinBtn.disabled = false;
-            spinBtn.classList.remove('opacity-50');
-
-            reelText.innerText = result.name;
-            reelText.style.transform = "scale(1.1)";
-            reelText.className = "font-jua text-3xl md:text-5xl text-amber-300 font-bold drop-shadow-lg";
-
-            resultBadge.innerText = "🎉 당첨 결과";
-            resultTitle.innerText = result.name;
-            resultDesc.innerText = `[${result.name}] 항목이 선택되었습니다!`;
-            resultModal.classList.remove('hidden');
-
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
-            }
-            playWinFanfare();
-
-            const studentInput = document.getElementById('student-name-input');
-            const studentName = studentInput.value.trim() || `${historyLogs.length + 1}번 참여자`;
-
-            historyLogs.unshift({
-                time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                student: studentName,
-                item: result.name
-            });
-
-            studentInput.value = '';
-            updateHistoryUI();
-        }
-
+        /* ----------------------------------------------------
+           6. 통계 업데이트
+        ---------------------------------------------------- */
         function updateHistoryUI() {
-            document.getElementById('history-count').innerText = historyLogs.length;
-            const listContainer = document.getElementById('history-list');
-            const statsContainer = document.getElementById('stats-container');
+            document.getElementById('total-roll-count').innerText = historyLogs.length;
+            const badgeList = document.getElementById('stats-badge-list');
 
             if (historyLogs.length === 0) {
-                listContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">아직 진행된 뽑기 기록이 없습니다.</p>';
-                statsContainer.innerHTML = '';
+                badgeList.innerHTML = '<span class="text-[11px] text-slate-500">추첨을 진행하면 통계가 집계됩니다.</span>';
                 return;
             }
 
             const counts = {};
+            options.forEach(o => counts[o.name] = 0);
             historyLogs.forEach(log => {
-                counts[log.item] = (counts[log.item] || 0) + 1;
+                counts[log.name] = (counts[log.name] || 0) + 1;
             });
 
-            statsContainer.innerHTML = Object.entries(counts).map(([itemName, count]) => `
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-xs font-semibold text-pink-300">
-                    <span>${itemName}:</span>
-                    <span class="text-amber-300 font-bold">${count}회</span>
-                </span>
-            `).join('');
-
-            listContainer.innerHTML = historyLogs.map(log => `
-                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800/80 text-xs">
-                    <div class="flex items-center gap-2">
-                        <span class="text-slate-500 text-[10px]">${log.time}</span>
-                        <span class="font-bold text-slate-200">${log.student}</span>
+            badgeList.innerHTML = Object.entries(counts).map(([name, cnt]) => {
+                const pct = Math.round((cnt / historyLogs.length) * 100);
+                return `
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs shadow">
+                        <span class="text-slate-300 font-medium">${name}:</span>
+                        <span class="text-amber-300 font-bold">${cnt}회</span>
+                        <span class="text-[10px] text-slate-500 font-semibold">(${pct}%)</span>
                     </div>
-                    <span class="px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                        ${log.item}
-                    </span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        function clearHistory() {
-            if (historyLogs.length === 0) return;
+        function clearHistoryLogs() {
+            if (isSpinning) return;
             historyLogs = [];
             updateHistoryUI();
-        }
-
-        function showModal(title, message) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerText = message;
-            document.getElementById('custom-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('custom-modal').classList.add('hidden');
         }
     </script>
 </body>
