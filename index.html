@@ -44,7 +44,7 @@
             border: 3px solid rgba(255, 255, 255, 0.12);
             transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
             aspect-ratio: 1 / 1;
-            overflow: hidden; /* 위아래로 넘어가는 글자 숨김 */
+            overflow: hidden;
         }
         .slot-cell.spinning {
             border-color: rgba(244, 63, 94, 0.9);
@@ -62,7 +62,7 @@
             opacity: 0.75;
         }
 
-        /* [핵심] 위에서 아래로 떨어지는 초고속 롤링 애니메이션 */
+        /* 위에서 아래로 떨어지는 초고속 롤링 애니메이션 */
         @keyframes reel-downward-spin {
             0% { transform: translateY(-50%); }
             100% { transform: translateY(0%); }
@@ -76,8 +76,8 @@
         }
 
         .reel-track.is-rolling {
-            animation: reel-downward-spin 0.12s linear infinite; /* 0.12초 광속 회전 */
-            filter: blur(2px); /* 초고속 모션 블러 효과 */
+            animation: reel-downward-spin 0.12s linear infinite;
+            filter: blur(2px);
         }
 
         /* 위에서 아래로 쿵 떨어지며 튕기는 착지 바운스 */
@@ -111,7 +111,12 @@
     <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-between">
         
         <!-- HEADER -->
-        <header class="text-center py-2 mb-2">
+        <header class="relative text-center py-2 mb-2">
+            <!-- 가이드 버튼 (우측 상단) -->
+            <button onclick="openGuideModal()" class="absolute right-1 top-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-amber-300 transition active:scale-95 shadow">
+                사용 가이드
+            </button>
+
             <div class="inline-flex items-center bg-pink-500/10 border border-pink-500/20 px-3.5 py-1 rounded-full mb-1">
                 <span class="text-xs text-pink-200">교실 만능 다중 슬롯머신</span>
             </div>
@@ -255,6 +260,58 @@
         </footer>
     </div>
 
+    <!-- 3. 사용 가이드 모달 (Guide Modal) -->
+    <div id="guide-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel bg-slate-900/95 border border-white/20 rounded-3xl max-w-xl w-full p-6 text-left shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                <h2 class="text-xl md:text-2xl text-amber-300">
+                    교실 멀티 슬롯머신 사용 가이드
+                </h2>
+                <button onclick="closeGuideModal()" class="text-slate-400 hover:text-white text-lg px-2 py-1">✕</button>
+            </div>
+
+            <div class="space-y-4 text-xs md:text-sm text-slate-300 leading-relaxed">
+                
+                <!-- 1. 기본 기능 -->
+                <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
+                    <div class="text-amber-300 font-bold text-sm">1. 주요 기능 안내</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                        <li><strong>확률 설정:</strong> 퍼센트(합계 100%) 또는 분수/비율(예: 1:4)로 자유 설정 가능</li>
+                        <li><strong>슬롯 개수:</strong> 1개(개인 추첨)부터 최대 40개(학급 일괄 추첨)까지 선택 가능</li>
+                        <li><strong>한 줄 최대 5개:</strong> 화면 크기에 맞춰 항상 깔끔하게 5열 중앙 정렬</li>
+                    </ul>
+                </div>
+
+                <!-- 2. 사운드 연출 -->
+                <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
+                    <div class="text-pink-300 font-bold text-sm">2. 상황별 사운드 연출</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                        <li><strong>당첨자가 1명이라도 있을 때:</strong> 축하 팡파레와 화려한 꽃가루 폭죽 효과</li>
+                        <li><strong>전원 꽝일 때:</strong> 익살스러운 실망 사운드 재생</li>
+                    </ul>
+                </div>
+
+                <!-- 3. 교실 수업 활용 팁 -->
+                <div class="bg-white/5 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
+                    <div class="text-sky-300 font-bold text-sm">3. 교실 실전 활용 팁</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                        <li><strong>학급 이벤트 & 당번:</strong> 간식 뽑기, 청소 당번, 자리 배치 등에 활용</li>
+                        <li><strong>발표자 뽑기:</strong> 당첨(발표), 꽝(통과) 설정 후 번호순으로 슬롯 개수 맞춰 추첨</li>
+                        <li><strong>수학 확률 수업:</strong> "1/5 확률로 30번을 뽑으면 정말 6번 정도 나올까?"<br>
+                            하단의 [누적 통계]를 통해 대수의 법칙(통계적 확률) 시각적 탐구 교구로 활용
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <button onclick="closeGuideModal()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-2xl text-sm transition active:scale-95 shadow">
+                확인하고 시작하기
+            </button>
+        </div>
+    </div>
+
     <script>
         /* ----------------------------------------------------
            1. 상태 변수 및 기본값
@@ -377,12 +434,30 @@
         }
 
         /* ----------------------------------------------------
-           3. 설정 화면 로직
+           3. 설정 화면 로직 & 가이드 모달 제어
         ---------------------------------------------------- */
         window.onload = function() {
             renderOptionInputs();
             validatePercentages();
         };
+
+        function openGuideModal() {
+            document.getElementById('guide-modal').classList.remove('hidden');
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guide-modal').classList.add('hidden');
+        }
+
+        // ESC 키로 모달 닫기 지원
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeGuideModal();
+        });
+
+        // 모달 배경 클릭 시 닫기
+        document.getElementById('guide-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'guide-modal') closeGuideModal();
+        });
 
         function setProbMode(mode) {
             probMode = mode;
@@ -636,14 +711,12 @@
             else if (drawSlotCount === 2) fontSizeClass = 'text-3xl md:text-5xl';
             else if (drawSlotCount <= 4) fontSizeClass = 'text-2xl md:text-4xl';
 
-            // 연속된 릴 스트립 리스트
             const stripItems = [];
             for (let r = 0; r < 8; r++) {
                 options.forEach(o => stripItems.push(o.name));
             }
             const stripHtml = stripItems.map(name => `<div class="reel-item ${fontSizeClass} text-amber-300 drop-shadow-md">${name}</div>`).join('');
 
-            // 모든 슬롯의 릴을 아래 방향으로 초고속 가동
             for (let i = 0; i < drawSlotCount; i++) {
                 const slotEl = document.getElementById(`slot-item-${i}`);
                 const trackEl = document.getElementById(`reel-track-${i}`);
@@ -656,14 +729,12 @@
                 trackEl.classList.add('is-rolling');
             }
 
-            // 고속 롤링 사운드 재생
             const tickInterval = setInterval(() => {
                 playTickSound();
             }, 55);
 
             let currentStopIndex = 0;
 
-            // 순차적으로 롤링을 멈추고 최종 결과로 착지
             function stopNextSlot() {
                 if (currentStopIndex < drawSlotCount) {
                     const slotEl = document.getElementById(`slot-item-${currentStopIndex}`);
@@ -682,7 +753,6 @@
                         slotEl.classList.add('stopped-win');
                     }
 
-                    // 최종 결과 착지 + 위에서 아래로 꽂히는 바운스
                     trackEl.innerHTML = `<div class="reel-item ${fontSizeClass} ${textColor} drop-shadow-md">${res.name}</div>`;
                     trackEl.classList.add('bounce-land');
 
@@ -698,7 +768,6 @@
                     const stopDelay = drawSlotCount > 15 ? 50 : (drawSlotCount > 5 ? 85 : 160);
                     setTimeout(stopNextSlot, stopDelay);
                 } else {
-                    // 전체 멈춤 완료
                     clearInterval(tickInterval);
                     isSpinning = false;
                     spinBtn.disabled = false;
@@ -721,7 +790,6 @@
                 }
             }
 
-            // 1.1초간 광속 롤링 후 1번 슬롯부터 순차 정지
             setTimeout(() => {
                 stopNextSlot();
             }, 1100);
